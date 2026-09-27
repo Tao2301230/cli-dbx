@@ -1,5 +1,6 @@
 ---
 name: builtin-dbx
+displayName: 内置数据库工具
 description: "Use this skill to operate the Agent Platform dbx builtin for MySQL, PostgreSQL, or SQLite: discover connection and schema details, run query/update/schema/admin/import/export/tx commands, and diagnose current DBX policy or connection errors."
 version: 0.1.0
 ---
