@@ -1,0 +1,13 @@
+{
+  "steps": [
+    {
+      "action": "update",
+      "sql": "update dbx_manual_20261003 set amount=amount+1 where id=1",
+      "max_rows_affected": 1
+    },
+    {
+      "action": "query",
+      "sql": "select amount from dbx_manual_20261003 where id=1"
+    }
+  ]
+}

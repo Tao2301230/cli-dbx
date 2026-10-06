@@ -1,0 +1,277 @@
+[
+  {
+    "id": "F01-cte",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/pg.toml",
+      "pg",
+      "WITH removed AS (DELETE FROM users RETURNING *) SELECT * FROM removed",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝query隐藏写入；当前dry-run接受"
+  },
+  {
+    "id": "F01-explain",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/pg.toml",
+      "pg",
+      "EXPLAIN ANALYZE DELETE FROM users",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝；当前接受"
+  },
+  {
+    "id": "F01-pragma",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "PRAGMA user_version=999",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝写入PRAGMA；当前接受"
+  },
+  {
+    "id": "F01-tx",
+    "args": [
+      "tx",
+      "pg",
+      "--config",
+      "./regressions/pg.toml",
+      "--plan",
+      "./plans/hidden-write.json",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝query步骤隐藏写入；当前接受"
+  },
+  {
+    "id": "F02-cte",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "WITH selected AS (SELECT id FROM users WHERE id=1) DELETE FROM users",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "外层无WHERE应拒绝；当前接受"
+  },
+  {
+    "id": "F02-subquery",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "UPDATE users SET active=(SELECT active FROM users WHERE id=1)",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "外层无WHERE应拒绝；当前接受"
+  },
+  {
+    "id": "F02-string",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "UPDATE users SET name=(SELECT ' where ')",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "字符串WHERE不应放行；当前接受"
+  },
+  {
+    "id": "F03-comment",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/reader.toml",
+      "reader",
+      "SELECT (SELECT id FROM users LIMIT 1) AS probe, '/*' AS marker FROM forbidden",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝白名单外forbidden；当前接受"
+  },
+  {
+    "id": "F03-using",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/pg.toml",
+      "pg",
+      "DELETE FROM users USING forbidden WHERE users.id=forbidden.id",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝USING来源表；当前接受"
+  },
+  {
+    "id": "F03-merge",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/pg.toml",
+      "pg",
+      "MERGE INTO users USING forbidden ON users.id=forbidden.id WHEN MATCHED THEN DELETE",
+      "--dry-run"
+    ],
+    "should_exit": 1,
+    "current_exit": 0,
+    "note": "应拒绝USING来源表；当前接受"
+  },
+  {
+    "id": "F04",
+    "args": [
+      "conn",
+      "show",
+      "leak",
+      "--config",
+      "./regressions/leak.toml"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "exit0但应隐藏NEW_DUMMY_SECRET；当前假密码泄漏，结果判失败"
+  },
+  {
+    "id": "F05",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "select 1 as id,2 as id"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "应保留两个值或明确拒绝歧义；当前rows只保留id=2，判失败"
+  },
+  {
+    "id": "F06-setup",
+    "args": [
+      "schema",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "create table dbx_manual_20261003_big(id integer primary key,n integer)"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "仅一次性合成SQLite建表"
+  },
+  {
+    "id": "F06-import",
+    "args": [
+      "import",
+      "file",
+      "./fixtures/bigint.json",
+      "synthetic",
+      "dbx_manual_20261003_big",
+      "--config",
+      "./regressions/synthetic.toml"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "导入exit0，不能据此认为精度正确"
+  },
+  {
+    "id": "F06-check",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "select cast(n as text) as n from dbx_manual_20261003_big"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "应9007199254740993；当前9007199254740992，判失败"
+  },
+  {
+    "id": "F07",
+    "args": [
+      "admin",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "vacuum"
+    ],
+    "should_exit": 0,
+    "current_exit": 1,
+    "note": "应成功；当前在事务中执行VACUUM报错"
+  },
+  {
+    "id": "F08-setup",
+    "args": [
+      "schema",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "create table dbx_manual_20261003_format(id integer primary key,note text)"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "仅一次性合成SQLite建表"
+  },
+  {
+    "id": "F08-insert",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "insert into dbx_manual_20261003_format values(1,'before')"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "准备合成数据"
+  },
+  {
+    "id": "F08",
+    "args": [
+      "update",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "update dbx_manual_20261003_format set note='committed_despite_error' where id=1",
+      "--format",
+      "unsupported"
+    ],
+    "should_exit": 1,
+    "current_exit": 1,
+    "note": "应先拒绝格式，不写入；当前exit1但已提交"
+  },
+  {
+    "id": "F08-check",
+    "args": [
+      "query",
+      "--config",
+      "./regressions/synthetic.toml",
+      "synthetic",
+      "select note from dbx_manual_20261003_format where id=1"
+    ],
+    "should_exit": 0,
+    "current_exit": 0,
+    "note": "应before；当前committed_despite_error，判失败"
+  }
+]

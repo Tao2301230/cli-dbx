@@ -1,0 +1,9 @@
+# Copy to a private connection file; run dbx secret encrypt and add its password line.
+[connection]
+# Built-in Go driver. To use ODBC instead, set driver = "odbc" and driver_dir.
+engine = "dm"
+host = "127.0.0.1"
+port = 5236
+user = "app"
+schema = "APP"
+allow_actions = ["query"]

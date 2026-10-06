@@ -1,4 +1,13 @@
 .DS_Store
-dist/
-dbx
-driver-downloads/
+.idea/
+/dist/
+/dbx
+/dbx.exe
+/examples/**/verification/
+
+# Keep release downloads local, but include the DBX documentation.
+/driver-downloads/*
+!/driver-downloads/*.md
+!/driver-downloads/*.docx
+!/driver-downloads/*.doc
+!/driver-downloads/*.pdf

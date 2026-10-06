@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "action": "update",
+      "sql": "update dbx_manual_20261003 set note='rollback' where id=1",
+      "max_rows_affected": 1
+    },
+    {
+      "action": "update",
+      "sql": "update dbx_manual_20261003 set amount=0 where id>0",
+      "max_rows_affected": 1
+    }
+  ]
+}

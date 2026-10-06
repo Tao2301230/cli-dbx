@@ -1,0 +1,11 @@
+[connection]
+engine = "dm"
+driver_path = "../drivers/dbx-driver-dm-0.2.0-driver-process.3"
+host = "REPLACE_WITH_HOST"
+port = 5236
+user = "DBX_TEST"
+schema = "DBX_TEST"
+password = "REPLACE_WITH_CURRENT_USER_ENCRYPTED_PASSWORD"
+timeout = "10s"
+allow_actions = ["query", "update", "schema", "admin"]
+tags = ["dev"]

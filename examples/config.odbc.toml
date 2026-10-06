@@ -1,0 +1,16 @@
+# Replace the library filename and options with those required by your vendor.
+# On Windows the vendor installer must also register the driver.
+[connection]
+engine = "sqlserver"
+driver = "odbc"
+driver_dir = "/path/to/vendor/lib"
+odbc_driver = "libvendor.so" # Use the actual .dylib or .dll on macOS/Windows.
+host = "127.0.0.1"
+port = 1433
+database = "appdb"
+user = "app"
+# Run dbx secret encrypt and add its password line.
+allow_actions = ["query"]
+
+[connection.odbc_options]
+Encrypt = "yes"

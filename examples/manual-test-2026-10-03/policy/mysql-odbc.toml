@@ -1,0 +1,4 @@
+[connection]
+engine="mysql"
+driver="odbc"
+allow_actions=["query"]

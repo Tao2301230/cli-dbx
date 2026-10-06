@@ -1,0 +1,12 @@
+[connection]
+engine = "sqlserver"
+driver_path = "../drivers/dbx-driver-sqlserver-0.2.0-driver-process.3"
+host = "REPLACE_WITH_HOST"
+port = 1433
+user = "dbx_test"
+database = "dbx_test"
+schema = "dbo"
+password = "REPLACE_WITH_CURRENT_USER_ENCRYPTED_PASSWORD"
+timeout = "10s"
+allow_actions = ["query", "update", "schema", "admin"]
+tags = ["dev"]

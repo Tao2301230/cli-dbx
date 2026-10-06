@@ -1,0 +1,5 @@
+[connection]
+engine="postgres"
+dsn="postgres://dummy@127.0.0.1:1/unused"
+allow_actions=["query","update"]
+allow_tables=["users"]

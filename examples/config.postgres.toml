@@ -1,0 +1,11 @@
+# PostgreSQL connection example.
+# Replace the endpoint, port, user, database and SSL mode with the instance's values.
+# Run dbx secret encrypt and add the generated password line once.
+[connection]
+engine = "postgres"
+host = "127.0.0.1"
+port = 5432
+user = "app"
+database = "appdb"
+sslmode = "require"
+allow_actions = ["query"]

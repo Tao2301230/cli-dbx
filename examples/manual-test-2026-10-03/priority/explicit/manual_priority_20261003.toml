@@ -1,0 +1,5 @@
+[connection]
+engine="sqlite"
+dsn="file:priority-explicit.sqlite"
+role="explicit"
+allow_actions=["query"]

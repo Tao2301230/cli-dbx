@@ -1,0 +1,11 @@
+[connection]
+engine = "mysql"
+host = "REPLACE_WITH_HOST"
+port = 3306
+user = "dbx_test"
+database = "dbx_test"
+schema = "dbx_test"
+password = "REPLACE_WITH_CURRENT_USER_ENCRYPTED_PASSWORD"
+timeout = "10s"
+allow_actions = ["query", "update", "schema", "admin"]
+tags = ["dev"]

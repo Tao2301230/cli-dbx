@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {
+      "action": "query",
+      "sql": "WITH removed AS (DELETE FROM users RETURNING *) SELECT * FROM removed"
+    }
+  ]
+}

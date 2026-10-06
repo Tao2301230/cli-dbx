@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {
+      "action": "schema",
+      "sql": "create table do_not_create(id integer)"
+    }
+  ]
+}

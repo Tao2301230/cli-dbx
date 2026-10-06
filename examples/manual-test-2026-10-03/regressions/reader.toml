@@ -1,0 +1,7 @@
+[connection]
+engine = "sqlite"
+path = "../data/regressions.sqlite"
+timeout = "5s"
+allow_actions = ["query", "update", "schema", "admin"]
+tags = ["dev"]
+allow_tables=["users"]

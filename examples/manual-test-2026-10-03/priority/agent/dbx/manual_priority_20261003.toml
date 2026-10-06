@@ -1,0 +1,5 @@
+[connection]
+engine="sqlite"
+dsn="file:priority-agent.sqlite"
+role="agent"
+allow_actions=["query"]

@@ -1,0 +1,4 @@
+[connection]
+engine="sqlserver"
+dsn="sqlserver://dummy:OLD_DUMMY_SECRET@127.0.0.1:1?database=fake&change+password=NEW_DUMMY_SECRET"
+allow_actions=["query"]

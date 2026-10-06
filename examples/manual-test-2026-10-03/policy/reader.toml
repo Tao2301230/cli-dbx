@@ -1,0 +1,6 @@
+[connection]
+engine = "sqlite"
+path = "../data/manual.sqlite"
+timeout = "5s"
+allow_actions = ["query"]
+tags = ["dev"]

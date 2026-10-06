@@ -1,0 +1,1269 @@
+[
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "version",
+    "args": [
+      "version"
+    ],
+    "exit": 0,
+    "expect": "exit 0；显示对应版本或帮助",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "version-flag",
+    "args": [
+      "--version"
+    ],
+    "exit": 0,
+    "expect": "exit 0；显示对应版本或帮助",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "help",
+    "args": [
+      "--help"
+    ],
+    "exit": 0,
+    "expect": "exit 0；显示对应版本或帮助",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "help-query",
+    "args": [
+      "query",
+      "--help"
+    ],
+    "exit": 0,
+    "expect": "exit 0；显示对应版本或帮助",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "help-secret",
+    "args": [
+      "secret",
+      "encrypt",
+      "--help"
+    ],
+    "exit": 0,
+    "expect": "exit 0；显示对应版本或帮助",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "removed-odbc",
+    "args": [
+      "odbc",
+      "list"
+    ],
+    "exit": 2,
+    "expect": "exit 2；旧 odbc 命令已移除",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "conn-list",
+    "args": [
+      "conn",
+      "list",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；ok=true",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "conn-show",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./connections",
+      "sqlite"
+    ],
+    "exit": 0,
+    "expect": "exit 0；ok=true",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "conn-test",
+    "args": [
+      "conn",
+      "test",
+      "--config",
+      "./connections",
+      "sqlite"
+    ],
+    "exit": 0,
+    "expect": "exit 0；ok=true",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.1 版本、帮助和连接",
+    "id": "bad-arg",
+    "args": [
+      "query",
+      "--file",
+      "./sql/query.sql"
+    ],
+    "exit": 2,
+    "expect": "exit 2；--file 不是参数",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "check-table",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select name from sqlite_master where name like 'dbx_manual_20261003%'"
+    ],
+    "exit": 0,
+    "expect": "exit 0；rows 为空，非空则停止并换全新测试目录",
+    "check": {
+      "count": 0
+    },
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "create-dry",
+    "args": [
+      "schema",
+      "--config",
+      "./connections",
+      "sqlite",
+      "create table dbx_manual_20261003(id integer primary key, note varchar(80), amount decimal(12,2))",
+      "--dry-run"
+    ],
+    "exit": 0,
+    "expect": "exit 0；仅计划，无建表",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "create",
+    "args": [
+      "schema",
+      "--config",
+      "./connections",
+      "sqlite",
+      "create table dbx_manual_20261003(id integer primary key, note varchar(80), amount decimal(12,2))"
+    ],
+    "exit": 0,
+    "expect": "exit 0；建表成功",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "insert1",
+    "args": [
+      "update",
+      "--config",
+      "./connections",
+      "sqlite",
+      "insert into dbx_manual_20261003 values(1,'first',10)",
+      "--max-rows-affected",
+      "1"
+    ],
+    "exit": 0,
+    "expect": "exit 0；影响1行",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "insert2",
+    "args": [
+      "update",
+      "--config",
+      "./connections",
+      "sqlite",
+      "insert into dbx_manual_20261003 values(2,null,20)"
+    ],
+    "exit": 0,
+    "expect": "exit 0；影响1行",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "inspect-connection",
+    "args": [
+      "inspect",
+      "connection",
+      "--config",
+      "./connections",
+      "sqlite"
+    ],
+    "exit": 0,
+    "expect": "exit 0；目标为本轮data/manual.sqlite，包含allow_actions等连接元数据",
+    "check": {
+      "connection_meta": true
+    },
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "inspect-schema",
+    "args": [
+      "inspect",
+      "schema",
+      "--config",
+      "./connections",
+      "sqlite",
+      "main"
+    ],
+    "exit": 0,
+    "expect": "exit 0；main的tables中包含dbx_manual_20261003",
+    "check": {
+      "schema_table": true
+    },
+    "known": null
+  },
+  {
+    "section": "3.2 检查同名表并创建",
+    "id": "inspect-table",
+    "args": [
+      "inspect",
+      "table",
+      "--config",
+      "./connections",
+      "sqlite",
+      "dbx_manual_20261003",
+      "main"
+    ],
+    "exit": 0,
+    "expect": "exit 0；id/note/amount三列，id为主键",
+    "check": {
+      "table_columns_pk": true
+    },
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "query-json",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select * from dbx_manual_20261003 order by id"
+    ],
+    "exit": 0,
+    "expect": "exit 0；两行，id2.note=NULL",
+    "check": {
+      "count": 2,
+      "row": {
+        "id": 2,
+        "note": null,
+        "amount": 20
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "query-table",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select * from dbx_manual_20261003 order by id",
+      "--format",
+      "table"
+    ],
+    "exit": 0,
+    "expect": "exit 0；可读表格",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "query-verbose",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select * from dbx_manual_20261003 order by id",
+      "--verbose"
+    ],
+    "exit": 0,
+    "expect": "exit 0；额外连接/审计元信息",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "query-empty",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select * from dbx_manual_20261003 where id=999"
+    ],
+    "exit": 0,
+    "expect": "exit 0；0行",
+    "check": {
+      "count": 0
+    },
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "query-file",
+    "args": [
+      "query",
+      "file",
+      "--config",
+      "./connections",
+      "sqlite",
+      "./sql/query.sql"
+    ],
+    "exit": 0,
+    "expect": "exit 0；两行",
+    "check": {
+      "count": 2
+    },
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "update-file",
+    "args": [
+      "update",
+      "file",
+      "--config",
+      "./connections",
+      "sqlite",
+      "./sql/update.sql"
+    ],
+    "exit": 0,
+    "expect": "exit 0；id2.note=from-file",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.3 查询格式、文件与更新",
+    "id": "update",
+    "args": [
+      "update",
+      "--config",
+      "./connections",
+      "sqlite",
+      "update dbx_manual_20261003 set amount=11 where id=1"
+    ],
+    "exit": 0,
+    "expect": "exit 0；影响1行",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "import-dry",
+    "args": [
+      "import",
+      "file",
+      "./fixtures/rows.csv",
+      "sqlite",
+      "dbx_manual_20261003",
+      "--dry-run",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；仅计划；不写入",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "import-limit",
+    "args": [
+      "import",
+      "file",
+      "./fixtures/rows.csv",
+      "sqlite",
+      "dbx_manual_20261003",
+      "--max-rows-affected",
+      "1",
+      "--config",
+      "./connections"
+    ],
+    "exit": 1,
+    "expect": "exit 1；影响行数超限，整批回滚",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "import-rollback-check",
+    "args": [
+      "query",
+      "sqlite",
+      "select count(*) as n from dbx_manual_20261003",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；n=2",
+    "check": {
+      "row": {
+        "n": 2
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "import-csv",
+    "args": [
+      "import",
+      "file",
+      "./fixtures/rows.csv",
+      "sqlite",
+      "dbx_manual_20261003",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；增加id3/4；中文、逗号、双引号、换行保持",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "import-json",
+    "args": [
+      "import",
+      "file",
+      "./fixtures/rows.json",
+      "sqlite",
+      "dbx_manual_20261003",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；增加id5",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "page1",
+    "args": [
+      "query",
+      "sqlite",
+      "select id from dbx_manual_20261003 order by id",
+      "--page-size",
+      "2",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；id1/2，next_cursor=2",
+    "check": {
+      "ids": [
+        1,
+        2
+      ]
+    },
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "page2",
+    "args": [
+      "query",
+      "sqlite",
+      "select id from dbx_manual_20261003 order by id",
+      "--page-size",
+      "2",
+      "--cursor",
+      "2",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；id3/4",
+    "check": {
+      "ids": [
+        3,
+        4
+      ]
+    },
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "page3",
+    "args": [
+      "query",
+      "sqlite",
+      "select id from dbx_manual_20261003 order by id",
+      "--page-size",
+      "2",
+      "--cursor",
+      "4",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；id5，more=false",
+    "check": {
+      "ids": [
+        5
+      ]
+    },
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "export-csv",
+    "args": [
+      "export",
+      "table",
+      "dbx_manual_20261003",
+      "sqlite",
+      "./output/rows.csv",
+      "--format",
+      "csv",
+      "--limit",
+      "5",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；CSV含5条记录；字段内换行不是新记录",
+    "check": {
+      "export_csv": true
+    },
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "export-json",
+    "args": [
+      "export",
+      "table",
+      "dbx_manual_20261003",
+      "sqlite",
+      "./output/rows.json",
+      "--format",
+      "json",
+      "--limit",
+      "5",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；JSON数组长度5",
+    "check": {
+      "export_json": true
+    },
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "export-missing-dir",
+    "args": [
+      "export",
+      "table",
+      "dbx_manual_20261003",
+      "sqlite",
+      "./no-such-directory/rows.csv",
+      "--config",
+      "./connections"
+    ],
+    "exit": 1,
+    "expect": "exit 1；输出目录不存在，返回失败",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.4 CSV/JSON 导入导出与分页",
+    "id": "overwrite-observe",
+    "args": [
+      "export",
+      "table",
+      "dbx_manual_20261003",
+      "sqlite",
+      "./output/rows.json",
+      "--format",
+      "json",
+      "--limit",
+      "2",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；行为观察：覆盖旧JSON文件，现仅2行",
+    "check": {
+      "export_overwrite": true
+    },
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "schema-file",
+    "args": [
+      "schema",
+      "file",
+      "sqlite",
+      "./sql/schema.sql",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；创建索引",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "alter",
+    "args": [
+      "schema",
+      "--config",
+      "./connections",
+      "sqlite",
+      "alter table dbx_manual_20261003 add column extra integer"
+    ],
+    "exit": 0,
+    "expect": "exit 0；增加extra列，后续导入只指定原有列",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "admin-file",
+    "args": [
+      "admin",
+      "file",
+      "sqlite",
+      "./sql/admin.sql",
+      "--config",
+      "./connections"
+    ],
+    "exit": 0,
+    "expect": "exit 0；ANALYZE成功",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "admin-direct",
+    "args": [
+      "admin",
+      "--config",
+      "./connections",
+      "sqlite",
+      "analyze dbx_manual_20261003"
+    ],
+    "exit": 0,
+    "expect": "exit 0",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "dsn-query",
+    "args": [
+      "query",
+      "dsn",
+      "sqlite",
+      "file:./data/manual.sqlite",
+      "select count(*) as n from dbx_manual_20261003"
+    ],
+    "exit": 0,
+    "expect": "exit 0；临时DSN不继承命名连接策略",
+    "check": {
+      "row": {
+        "n": 5
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "dsn-update",
+    "args": [
+      "update",
+      "dsn",
+      "sqlite",
+      "file:./data/manual.sqlite",
+      "update dbx_manual_20261003 set extra=1 where id=1"
+    ],
+    "exit": 0,
+    "expect": "exit 0；临时DSN不继承命名连接策略",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "dsn-schema",
+    "args": [
+      "schema",
+      "dsn",
+      "sqlite",
+      "file:./data/manual.sqlite",
+      "create table dbx_manual_20261003_dsn(id integer)"
+    ],
+    "exit": 0,
+    "expect": "exit 0；临时DSN不继承命名连接策略",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "dsn-admin",
+    "args": [
+      "admin",
+      "dsn",
+      "sqlite",
+      "file:./data/manual.sqlite",
+      "analyze dbx_manual_20261003_dsn"
+    ],
+    "exit": 0,
+    "expect": "exit 0；临时DSN不继承命名连接策略",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "dsn-rename",
+    "args": [
+      "schema",
+      "dsn",
+      "sqlite",
+      "file:./data/manual.sqlite",
+      "alter table dbx_manual_20261003_dsn rename to dbx_manual_20261003_renamed"
+    ],
+    "exit": 0,
+    "expect": "exit 0；临时DSN不继承命名连接策略",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.5 schema/admin 与临时 DSN",
+    "id": "dsn-drop",
+    "args": [
+      "schema",
+      "dsn",
+      "sqlite",
+      "file:./data/manual.sqlite",
+      "drop table dbx_manual_20261003_renamed"
+    ],
+    "exit": 0,
+    "expect": "exit 0；临时DSN不继承命名连接策略",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-dry",
+    "args": [
+      "tx",
+      "sqlite",
+      "--config",
+      "./connections",
+      "--plan",
+      "./plans/ok.json",
+      "--dry-run"
+    ],
+    "exit": 0,
+    "expect": "exit 0；仅计划",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-ok",
+    "args": [
+      "tx",
+      "sqlite",
+      "--config",
+      "./connections",
+      "--plan",
+      "./plans/ok.json"
+    ],
+    "exit": 0,
+    "expect": "exit 0；id1.amount=12",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-fail",
+    "args": [
+      "tx",
+      "sqlite",
+      "--config",
+      "./connections",
+      "--plan",
+      "./plans/fail.json"
+    ],
+    "exit": 1,
+    "expect": "exit 1；主键冲突，id9也回滚",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-limit",
+    "args": [
+      "tx",
+      "sqlite",
+      "--config",
+      "./connections",
+      "--plan",
+      "./plans/limit.json"
+    ],
+    "exit": 1,
+    "expect": "exit 1；第二步超限，第一步note修改也回滚",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-action",
+    "args": [
+      "tx",
+      "sqlite",
+      "--config",
+      "./connections",
+      "--plan",
+      "./plans/bad-action.json"
+    ],
+    "exit": 1,
+    "expect": "exit 1；tx_unsupported_action",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-check",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select id,note,amount from dbx_manual_20261003 order by id"
+    ],
+    "exit": 0,
+    "expect": "exit 0；5行；id1 first/12，无id9",
+    "check": {
+      "count": 5,
+      "row": {
+        "id": 1,
+        "note": "first",
+        "amount": 12
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.6 事务提交与两种回滚",
+    "id": "tx-tail",
+    "args": [
+      "tx",
+      "sqlite",
+      "--config",
+      "./connections",
+      "--plan",
+      "./plans/trailing-observation.json"
+    ],
+    "exit": 0,
+    "expect": "exit 0；观察：仅第一JSON对象被执行；正式计划只放一个对象",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "wrong-action",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "delete from dbx_manual_20261003 where id=1"
+    ],
+    "exit": 1,
+    "expect": "exit 1；action_mismatch",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "no-where",
+    "args": [
+      "update",
+      "--config",
+      "./connections",
+      "sqlite",
+      "update dbx_manual_20261003 set amount=0"
+    ],
+    "exit": 1,
+    "expect": "exit 1；missing_where",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "multi",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select 1; select 2"
+    ],
+    "exit": 1,
+    "expect": "exit 1；multiple_statements_blocked",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "write-limit",
+    "args": [
+      "update",
+      "--config",
+      "./connections",
+      "sqlite",
+      "update dbx_manual_20261003 set amount=0 where id>0",
+      "--max-rows-affected",
+      "1"
+    ],
+    "exit": 1,
+    "expect": "exit 1；超限，数据不变",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "reader-write",
+    "args": [
+      "update",
+      "--config",
+      "./policy/reader.toml",
+      "reader",
+      "update dbx_manual_20261003 set amount=0 where id=1",
+      "--dry-run"
+    ],
+    "exit": 1,
+    "expect": "exit 1；action_blocked",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "tables-pass",
+    "args": [
+      "query",
+      "--config",
+      "./policy/tables.toml",
+      "tables",
+      "select id from dbx_manual_20261003 order by id"
+    ],
+    "exit": 0,
+    "expect": "exit 0；白名单表可读",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "tables-deny",
+    "args": [
+      "query",
+      "--config",
+      "./policy/tables.toml",
+      "tables",
+      "select * from forbidden",
+      "--dry-run"
+    ],
+    "exit": 1,
+    "expect": "exit 1；table_blocked",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "wildcard",
+    "args": [
+      "query",
+      "--config",
+      "./policy/wildcard.toml",
+      "wildcard",
+      "select id from dbx_manual_20261003 order by id"
+    ],
+    "exit": 0,
+    "expect": "exit 0；通配符匹配",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "readonly-observe",
+    "args": [
+      "update",
+      "--config",
+      "./policy/readonly.toml",
+      "readonly",
+      "update dbx_manual_20261003 set amount=0 where id=1",
+      "--dry-run"
+    ],
+    "exit": 0,
+    "expect": "exit 0；观察：readonly为描述字段，allow_actions允许update",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "prod-bad",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/prod-bad.toml",
+      "prod-bad"
+    ],
+    "exit": 1,
+    "expect": "exit 1；prod配置含schema/admin，解析拒绝",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "prod-reader",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/prod-reader.toml",
+      "prod-reader"
+    ],
+    "exit": 0,
+    "expect": "exit 0；prod只读配置可解析",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "no-actions",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/missing-actions.toml",
+      "missing-actions"
+    ],
+    "exit": 1,
+    "expect": "exit 1；必须配置allow_actions",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "bad-secret",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/bad-password.toml",
+      "bad-password"
+    ],
+    "exit": 1,
+    "expect": "exit 1；畸形密文拒绝",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "source-env",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/bad-source.toml",
+      "bad-source"
+    ],
+    "exit": 1,
+    "expect": "exit 1；拒绝环境变量密码来源",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "mysql-odbc",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/mysql-odbc.toml",
+      "mysql-odbc"
+    ],
+    "exit": 1,
+    "expect": "exit 1；当前不支持MySQL ODBC",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "postgres-odbc",
+    "args": [
+      "conn",
+      "show",
+      "--config",
+      "./policy/postgres-odbc.toml",
+      "postgres-odbc"
+    ],
+    "exit": 1,
+    "expect": "exit 1；当前不支持PostgreSQL ODBC",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "single-config",
+    "args": [
+      "query",
+      "--config",
+      "./connections/sqlite.toml",
+      "sqlite",
+      "select count(*) as n from dbx_manual_20261003"
+    ],
+    "exit": 0,
+    "expect": "exit 0；单文件配置，n=5",
+    "check": {
+      "row": {
+        "n": 5
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.7 策略和配置负例",
+    "id": "env-dsn",
+    "args": [
+      "query",
+      "--config",
+      "./policy/env.toml",
+      "env",
+      "select count(*) as n from dbx_manual_20261003"
+    ],
+    "exit": 0,
+    "expect": "exit 0；DBX_MANUAL_DSN指定同一SQLite，n=5",
+    "check": {
+      "row": {
+        "n": 5
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.8 删除和仅清理本轮创建的对象",
+    "id": "delete",
+    "args": [
+      "update",
+      "--config",
+      "./connections",
+      "sqlite",
+      "delete from dbx_manual_20261003 where id=5"
+    ],
+    "exit": 0,
+    "expect": "exit 0；影响1行",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.8 删除和仅清理本轮创建的对象",
+    "id": "final-check",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select count(*) as n,sum(amount) as total from dbx_manual_20261003"
+    ],
+    "exit": 0,
+    "expect": "exit 0；n=4,total=102",
+    "check": {
+      "row": {
+        "n": 4,
+        "total": 102
+      }
+    },
+    "known": null
+  },
+  {
+    "section": "3.8 删除和仅清理本轮创建的对象",
+    "id": "drop-index",
+    "args": [
+      "schema",
+      "--config",
+      "./connections",
+      "sqlite",
+      "drop index dbx_manual_20261003_note"
+    ],
+    "exit": 0,
+    "expect": "exit 0",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.8 删除和仅清理本轮创建的对象",
+    "id": "drop-table",
+    "args": [
+      "schema",
+      "--config",
+      "./connections",
+      "sqlite",
+      "drop table dbx_manual_20261003"
+    ],
+    "exit": 0,
+    "expect": "exit 0",
+    "check": null,
+    "known": null
+  },
+  {
+    "section": "3.8 删除和仅清理本轮创建的对象",
+    "id": "clean-check",
+    "args": [
+      "query",
+      "--config",
+      "./connections",
+      "sqlite",
+      "select name from sqlite_master where name like 'dbx_manual_20261003%'"
+    ],
+    "exit": 0,
+    "expect": "exit 0；无本轮残留对象",
+    "check": {
+      "count": 0
+    },
+    "known": null
+  }
+]

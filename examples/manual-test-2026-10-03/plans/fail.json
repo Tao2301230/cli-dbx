@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "action": "update",
+      "sql": "insert into dbx_manual_20261003(id,note,amount) values(9,'rollback',90)",
+      "max_rows_affected": 1
+    },
+    {
+      "action": "update",
+      "sql": "insert into dbx_manual_20261003(id,note,amount) values(1,'duplicate',99)",
+      "max_rows_affected": 1
+    }
+  ]
+}

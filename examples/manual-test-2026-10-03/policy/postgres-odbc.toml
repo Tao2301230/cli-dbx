@@ -1,0 +1,4 @@
+[connection]
+engine="postgres"
+driver="odbc"
+allow_actions=["query"]

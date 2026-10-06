@@ -1,0 +1,5 @@
+[connection]
+engine="sqlite"
+dsn="file:priority-global.sqlite"
+role="global"
+allow_actions=["query"]

@@ -1,0 +1,13 @@
+[connection]
+engine = "dm"
+driver = "odbc"
+driver_path = "../drivers/dbx-driver-dm-odbc-0.2.0-driver-process.3"
+odbc_driver = "/REPLACE/WITH/INSTALLED/VENDOR/LIBRARY"
+host = "REPLACE_WITH_HOST"
+port = 5236
+user = "DBX_TEST"
+schema = "DBX_TEST"
+password = "REPLACE_WITH_CURRENT_USER_ENCRYPTED_PASSWORD"
+timeout = "10s"
+allow_actions = ["query", "update", "schema", "admin"]
+tags = ["dev"]
