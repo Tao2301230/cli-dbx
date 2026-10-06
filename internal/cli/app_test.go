@@ -70,7 +70,7 @@ func TestHelpOutputsUseCompactTaskCards(t *testing.T) {
 	txHelp := captureStdout(t, func() error {
 		return New().Run(context.Background(), []string{"tx", "--help"})
 	})
-	if !strings.Contains(txHelp, "<conn> --plan <path.json>") || !strings.Contains(txHelp, "Any failure rolls the whole transaction back.") {
+	if !strings.Contains(txHelp, "<conn> --plan <path.json>") || !strings.Contains(txHelp, "A failed step rolls the whole transaction back.") {
 		t.Fatalf("tx help should describe transaction plans, got:\n%s", txHelp)
 	}
 	if strings.Contains(txHelp, "run <conn> --plan <path.json>") {

@@ -39,6 +39,7 @@ func newConnCommand() *cobra.Command {
 		Long: strings.TrimSpace(`
 Use conn to list configured targets, inspect one target, or verify that a
 connection can be reached before inspect or query.
+MySQL/SQLite are built in; PostgreSQL/Oracle/DM/SQL Server require installed drivers.
 `),
 		UsageLines: []string{
 			"dbx conn [command]",
@@ -196,7 +197,7 @@ func newSQLCommand(name, short, longHelp, example string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     name + " <conn> <sql>",
 		Short:   short,
-		Long:    longHelp,
+		Long:    longHelp + "\n\nMySQL/SQLite are built in; PostgreSQL/Oracle/DM/SQL Server require installed drivers.\nSelect a versioned executable with connection.driver_path; its manifest is <executable>.json.\nFlat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.config/dbx/drivers.",
 		Example: example,
 		UsageLines: []string{
 			fmt.Sprintf("dbx %s <conn> <sql>", name),
@@ -235,8 +236,9 @@ func newTxCommand() *cobra.Command {
 		Long: strings.TrimSpace(`
 Use tx when multiple reads and writes must commit together.
 
-Only query and update steps are allowed in a transaction plan. Any failure rolls
-the entire transaction back.
+Only query and update steps are allowed in a transaction plan. A failed step rolls
+the entire transaction back. A connection loss during commit can leave the outcome
+unknown; verify with a read-only query before retrying. External writes are not retried automatically.
 `),
 		UsageLines: []string{
 			"dbx tx <conn> --plan <path.json>",

@@ -132,6 +132,21 @@ func samePaths(got, want []string) bool {
 	return true
 }
 
+func TestLoadNamedPreservesDriverDir(t *testing.T) {
+	dir := t.TempDir()
+	raw := "[connection]\nengine = \"postgres\"\ndsn = \"postgres://localhost/test\"\ndriver_dir = \"custom/drivers\"\nallow_actions = [\"query\"]\n"
+	if err := os.WriteFile(filepath.Join(dir, "pg.toml"), []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	profile, err := LoadNamed(dir, "pg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := profile.Connection.DriverDir; got != "custom/drivers" {
+		t.Fatalf("driver_dir = %q", got)
+	}
+}
+
 func TestDefaultConfigDoesNotFallbackWhenAgentConnectionIsInvalid(t *testing.T) {
 	home := t.TempDir()
 	agentHome := t.TempDir()
@@ -443,5 +458,29 @@ path = "./demo.db"
 	_, err := LoadNamed(configPath, "missing-actions")
 	if err == nil || !strings.Contains(err.Error(), "connection.allow_actions is required") {
 		t.Fatalf("expected missing allow_actions error, got %v", err)
+	}
+}
+
+func TestLoadNamedNormalizesDriverPath(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	dir := t.TempDir()
+	for _, tc := range []struct{ input, want string }{
+		{"drivers/dbx-driver-oracle-1.0.0", filepath.Join(dir, "drivers", "dbx-driver-oracle-1.0.0")},
+		{"~/.config/dbx/drivers/dbx-driver-oracle-2.0.0", filepath.Join(home, ".config", "dbx", "drivers", "dbx-driver-oracle-2.0.0")},
+		{filepath.ToSlash(filepath.Join(dir, "absolute driver")), filepath.Join(dir, "absolute driver")},
+	} {
+		raw := "[connection]\nengine='oracle'\ndriver_path='" + tc.input + "'\nallow_actions=['query']\n"
+		if err := os.WriteFile(filepath.Join(dir, "remote.toml"), []byte(raw), 0600); err != nil {
+			t.Fatal(err)
+		}
+		profile, err := LoadNamed(dir, "remote")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if filepath.Clean(profile.Connection.DriverPath) != tc.want {
+			t.Fatalf("driver_path = %q, want %q", profile.Connection.DriverPath, tc.want)
+		}
 	}
 }

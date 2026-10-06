@@ -24,9 +24,9 @@
 - CLI：标准库 `flag`
 - 数据库访问：`database/sql`
 - 驱动：
-  - PostgreSQL：`pgx`
-  - MySQL：`go-sql-driver/mysql`
-  - SQLite：`modernc.org/sqlite`
+  - 主程序内置 MySQL：`go-sql-driver/mysql`，SQLite：`modernc.org/sqlite`
+  - 独立进程：PostgreSQL、Oracle、达梦、SQL Server，各有 `drivers/<engine>/go.mod`
+  - Oracle 使用 Go 1.26.6，仅独立模块受此工具链要求约束；根模块保持 Go 1.22
 - 配置格式：TOML
 - 构建与测试：`go build`、`go test`
 - 发布：仓库内 `scripts/release/build.sh`
@@ -49,8 +49,18 @@
   动作模型：`query / update / schema / admin`。
 - `internal/sqlclass` / `internal/sqlanalyzer`
   SQL 分类、单语句校验、危险写入检测。
+- `internal/sqllex`
+  共享引号、注释和括号层级识别；方言语法不确定时拒绝执行。
 - `internal/db`
-  具体数据库执行、导入导出、事务计划执行。
+  路由 MySQL/SQLite 到内置执行器，四种外部引擎到进程客户端。
+- `internal/dbcore`
+  共享 SQL 执行、元数据、导入与整批事务，不导入厂商驱动。
+- `internal/driverprocess`
+  驱动包校验、私有管道协议、进程取消与回收。
+- `drivers/postgres`、`drivers/oracle`、`drivers/dm`、`drivers/sqlserver`
+  独立模块及可执行入口，各自注册对应数据库驱动。
+- `drivers/odbc`
+  独立 ODBC 模块，按构建时固定的 oracle/dm/sqlserver 方言分别生成适配程序；只有此模块链接 Go ODBC 适配层。
 - `internal/output`
   结构化输出、摘要、表格输出。
 
@@ -60,7 +70,7 @@
 2. 连接配置解析为 `conn.Spec`
 3. SQL 被分类为 statement class，再映射到 action
 4. DBX 先做 `allow_actions` 和安全策略校验
-5. 校验通过后才进入数据库执行层
+5. 校验通过后才进入数据库执行层；外部引擎此时才校验并启动独立驱动
 
 ## 4. 目录结构
 
@@ -92,7 +102,7 @@
 
 ```toml
 [connection]
-engine = "postgres|mysql|sqlite"
+engine = "mysql|sqlite|postgres|oracle|dm|sqlserver"
 allow_actions = ["query", "update", "schema", "admin"]
 ```
 
@@ -206,6 +216,10 @@ allow_actions = ["query", "update", "schema", "admin"]
 ```bash
 go build -o ./dbx ./cmd/dbx
 go test ./...
+(cd drivers/postgres && go test ./...)
+(cd drivers/oracle && GOTOOLCHAIN=go1.26.6 go test ./...)
+(cd drivers/dm && go test ./...)
+(cd drivers/sqlserver && go test ./...)
 ```
 
 修改命令或输出时，至少检查：
@@ -221,8 +235,8 @@ go test ./...
 1. 将根目录 Git 跟踪的 `VERSION` 更新为计划发布的版本（格式如 `v0.1.0`），并与代码和文档一并提交
 2. 运行 `go test ./...`
 3. 创建并推送与 `VERSION` 相同的 tag，例如 `v0.1.0`
-4. 执行 `scripts/release/build.sh`
-5. 校验 `dist/<version>/..._checksums.txt`
+4. 执行 `scripts/release/build.sh` 构建核心包，另执行 `scripts/build-drivers.sh` 构建四种独立驱动包；本机验证可用 `--host --engine postgres`
+5. 校验 `dist/<version>/..._checksums.txt` 与各独立驱动包的 `.sha256`
 6. 在 GitHub Release 上传产物
 
 如果文档分工变化：
@@ -246,4 +260,34 @@ go test ./...
 
 项目位于 `agent-platform-connectors/dbx`，`connector/` 是 connector.json 模板、cli.json、skills 与全部资源的唯一源码。`VERSION` 同时控制 CLI 和连接器发布版本；模板不维护 version，构建时生成。任何 CLI、清单或技能改动均需发布新版本。
 
-现有 Shell/PowerShell 发布脚本额外生成 `dist/<version>/builtin.dbx_<version>_<os>_<arch>.zip`，内容位于 `runtime/connectors/builtin.dbx/`，包含声明、完整 skills 和目标平台 bin。Platform 按完整包摘要消费，不修改包内内容。原 CLI 独立发布包继续提供。包生成器检查 VERSION 满足 cli.json.minVersion（包含 SemVer 预发布版本比较）。
+现有 Shell/PowerShell 发布脚本额外生成 `dist/<version>/builtin.dbx_<version>_<os>_<arch>.zip`，内容位于 `runtime/connectors/builtin.dbx/`，包含声明、完整 skills 和目标平台 `bin/dbx`。核心连接器只随主程序提供 MySQL、SQLite，四种外部驱动单独分发；不得向 `connector/` 添加驱动二进制。Platform 按完整包摘要消费，不修改包内内容。原 CLI 独立发布包继续提供。包生成器检查 VERSION 满足 cli.json.minVersion（包含 SemVer 预发布版本比较）。
+
+
+## 独立驱动进程契约
+
+- `connection.driver_path` 精确指定驱动可执行文件，支持 `~`，相对路径以连接 TOML 所在目录为准。包内平铺 `dbx-driver-<engine>-<version-without-v>[.exe]` 与完整程序文件名加 `.json` 的清单，多个版本互不覆盖。未指定路径时按 `driver_dir` > `DBX_DRIVER_DIR` > `~/.config/dbx/drivers` 选定根目录，只找平铺的无版本 `dbx-driver-<engine>[.exe]`。不搜索版本、不从 PATH 搜索、不自动下载或回退。旧的引擎子目录布局需重新安装。
+- `<可执行文件名>.json` 必须包含 `protocol_version`（当前 1）、`engine`、`version`、`os`、`arch`、`executable` 和小写十六进制 `sha256`。清单内程序名必须与选定文件名完全一致，程序和清单必须为普通文件，拒绝目录逃逸和符号链接；启动前检查引擎、平台、协议及摘要。驱动包是当前用户权限下的可信代码，不是安全沙箱。
+- 每次数据库操作使用一个进程；JSON 帧有长度限制，stdout 仅传协议，数据行分帧发送。标量显式保留 NULL、整数、浮点、字符串、二进制和时间，避免 JSON 浮点精度或时间格式变化。
+- 凭据和 DSN 仅走私有 stdin，不能加入子进程参数、日志或直接转发 stderr。安全策略、密钥解析、审计和对外 envelope 仍在 DBX 主程序中。
+- 事务全部步骤和整批导入必须在同一驱动进程内完成；影响行数在 commit 前校验，无法取得行数时不能假定为零。不要引入跨 CLI 调用的事务会话。
+- 父进程取消或超时终止并回收子进程，子进程同时使用操作超时及管道关闭监听。写操作不自动重试；提交期间失联不能承诺已回滚，须提示查询确认结果。
+- 根模块不得传递链接 pgx、Oracle、DM 或 SQL Server 的厂商客户端库。四个嵌套模块分别运行测试；根 `go test ./...` 不覆盖它们。
+- 打包工具 `scripts/release/package-driver/` 仅依赖标准库。Shell/PowerShell 入口生成独立归档及 `.sha256`，固定目录、时间、权限和次序。Oracle 工具链只在其模块构建时覆盖，不运行全局 `go env -w`。
+- 自动测试覆盖子进程执行、类型保真、清单/摘要/协议错误、取消回收、失败与超限回滚、策略拒绝时不启动驱动；真实厂商数据库未连接时，不能用编译或本地替身测试宣称数据库兼容性已验证。
+
+用户安装与操作说明见 [docs/driver-process.md](./docs/driver-process.md)。
+
+
+## ODBC 独立进程
+
+- 连接 `driver = "odbc"` 显式选择 ODBC；空值或 `native` 保持 Go 路线。当前 ODBC 仅开放 Oracle、达梦、SQL Server。
+- `driver_path` 指向 DBX 的版本化 ODBC 适配程序；`odbc_driver` 指向另外安装的厂商库，两者支持 `~` 和 TOML 相对路径。Windows 按当前进程架构查找指向该 DLL 的已注册名称，不写注册表。
+- ODBC 使用结构化字段和 `odbc_options`，禁止原始 DSN 和凭据/驱动/结构化目标字段覆盖。主程序解析密码后通过私有协议传给子进程，子进程组装 ODBC 连接串并加载库；输出不得序列化私有 ODBC 配置。
+- `drivers/odbc/fork` 保留 ODBC 上游许可证和来源，维护数据类型及影响行数修补；它是嵌套模块，需单独运行测试。NUMERIC/DECIMAL 以精确文本传输，二进制与文本按 SQL 类型区分。
+- ODBC 参数标记为 `?`，SQL 引号和元数据仍跟随 `engine`。事务、导入和影响行数保护与原有进程契约相同。厂商错误信息保守脱敏，同时保留不确定写入状态的提示。
+- 清单 `adapter` 缺省或 `native` 代表 Go 路线，`odbc` 必须与连接的驱动选择一致。可选 `files` 记录同目录配套文件的 SHA-256；加载时验证普通文件、名称无目录跳转和摘要。资源不得重名覆盖程序或清单。
+- `scripts/build-odbc-drivers.sh` / `.ps1` 单独构建 ODBC 变体。Mac 在匹配架构原生构建，复制 unixODBC/libltdl 并重定位、签名临时副本。配套库和许可证平铺且带发布版本，三个引擎同版本复用相同内容。主程序包不携带 ODBC 运行库。
+- Linux ODBC 需本机 CGO/unixODBC；Windows 仅声明 x64 支持，使用系统管理器。厂商客户端不纳入 DBX 包，其资源和硬编码依赖沿用厂商安装要求。
+- 所有 Go/ODBC 包保持不同文件名和清单；禁止因连接失败自动切换路线。协议暂保持 v1，新增连接字段向后兼容原有 Go 适配器。
+
+安装和构建说明见 [ODBC 独立进程](./docs/odbc-driver-process.md)。
