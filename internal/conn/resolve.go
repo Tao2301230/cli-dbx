@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -414,13 +414,34 @@ func buildSQLiteDSN(spec Spec) string {
 	if strings.HasPrefix(spec.Path, "sqlite:") || strings.HasPrefix(spec.Path, "file:") {
 		return spec.Path
 	}
-	if spec.Path == "" || spec.Path == ":memory:" {
+	if spec.Path == "" {
 		return "file::memory:"
 	}
-	if filepath.IsAbs(spec.Path) {
-		return "file:" + spec.Path
+	// Keep URI options separate so escaping a literal filename cannot change
+	// mode=ro, memory/cache settings, or driver-specific query parameters.
+	path, query, hasQuery := strings.Cut(spec.Path, "?")
+	dsn := sqliteFileURI(path, runtime.GOOS == "windows")
+	if hasQuery {
+		dsn += "?" + query
 	}
-	return "file:" + spec.Path
+	return dsn
+}
+
+func sqliteFileURI(path string, windows bool) string {
+	if windows {
+		path = strings.ReplaceAll(path, `\`, "/")
+		if len(path) >= 3 && path[1] == ':' && path[2] == '/' &&
+			(path[0] >= 'a' && path[0] <= 'z' || path[0] >= 'A' && path[0] <= 'Z') {
+			path = "/" + path
+		}
+	}
+	prefix := "file:"
+	if strings.HasPrefix(path, "//") {
+		// Preserve the leading slashes of UNC paths with an empty authority.
+		// file://server/... would require SQLITE_ALLOW_URI_AUTHORITY.
+		prefix += "//"
+	}
+	return prefix + (&url.URL{Path: path}).EscapedPath()
 }
 
 func buildExternalDSN(spec Spec, password string) (string, error) {

@@ -36,6 +36,8 @@ Flow:
   3. dbx query <name> 'select ...'
   Config files live in ~/.config/dbx/<name>.toml by default.
   AP_AGENT_CONFIG_HOME/dbx/<name>.toml takes priority when no --config is given.
+  Config, SQL, transaction JSON, CSV and JSON files accept UTF-8 with or without BOM.
+  SQLite filesystem paths preserve spaces, Unicode, # and literal percent signs.
 
 Example:
   dbx query local-pg 'select * from users order by id' --page-size 100
@@ -131,6 +133,7 @@ Facts:
   Read results return up to 100 rows by default.
   Duplicate result names get unique suffixes such as id_2; use SQL aliases for stable names.
   Multiple statements are blocked by default.
+  SQL files accept UTF-8 with or without BOM.
   Unsupported output formats are rejected before execution.
   Keep the same order by when you continue with --cursor.
 
@@ -205,6 +208,8 @@ Minimum:
 
 Facts:
   tx only accepts query and update steps.
+  Plans accept UTF-8 with or without BOM and must contain exactly one JSON document.
+  Unknown fields and trailing non-whitespace content are rejected before execution.
   Every step runs on one connection inside one transaction.
   A failed step rolls the whole transaction back.
   A connection loss during commit can leave the outcome unknown; verify before retrying.
@@ -229,6 +234,8 @@ When to use:
   Load csv or json rows into a table.
 
 Facts:
+  CSV and JSON input files accept UTF-8 with or without BOM.
+  JSON input must contain exactly one document.
   JSON integers within int64 are preserved exactly.
   Larger integers and high precision numbers bind as exact text; column conversion follows the database.
   --format accepts json or table and is validated before import.

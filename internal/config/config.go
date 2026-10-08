@@ -13,6 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/linlay/cli-dbx/internal/action"
 	"github.com/linlay/cli-dbx/internal/secret"
+	"github.com/linlay/cli-dbx/internal/textfile"
 )
 
 const (
@@ -321,7 +322,7 @@ func detectPathKind(path string) (string, bool, error) {
 }
 
 func loadFile(path string) (Profile, error) {
-	buf, err := os.ReadFile(path)
+	buf, err := textfile.ReadFile(path)
 	if err != nil {
 		return Profile{}, err
 	}
@@ -396,7 +397,7 @@ func resolveResourcePath(baseDir, value string, allowSQLiteSpecial bool) (string
 	if value == "" {
 		return "", nil
 	}
-	if allowSQLiteSpecial && (value == ":memory:" || strings.HasPrefix(value, "sqlite:") || strings.HasPrefix(value, "file:")) {
+	if allowSQLiteSpecial && (value == ":memory:" || strings.HasPrefix(value, ":memory:?") || strings.HasPrefix(value, "sqlite:") || strings.HasPrefix(value, "file:")) {
 		return value, nil
 	}
 	expanded, err := expandHome(value)

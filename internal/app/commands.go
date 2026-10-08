@@ -197,7 +197,7 @@ func newSQLCommand(name, short, longHelp, example string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     name + " <conn> <sql>",
 		Short:   short,
-		Long:    longHelp + "\n\nMySQL/SQLite are built in; PostgreSQL/Oracle/DM/SQL Server require installed drivers.\nSelect a versioned executable with connection.driver_path; its manifest is <executable>.json.\nFlat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.config/dbx/drivers.",
+		Long:    longHelp + "\n\nSQL files accept UTF-8 with or without BOM.\nMySQL/SQLite are built in; PostgreSQL/Oracle/DM/SQL Server require installed drivers.\nSelect a versioned executable with connection.driver_path; its manifest is <executable>.json.\nFlat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.config/dbx/drivers.",
 		Example: example,
 		UsageLines: []string{
 			fmt.Sprintf("dbx %s <conn> <sql>", name),
@@ -239,6 +239,9 @@ Use tx when multiple reads and writes must commit together.
 Only query and update steps are allowed in a transaction plan. A failed step rolls
 the entire transaction back. A connection loss during commit can leave the outcome
 unknown; verify with a read-only query before retrying. External writes are not retried automatically.
+
+The plan must be one UTF-8 JSON document, with or without BOM. Unknown fields,
+trailing JSON documents and trailing non-whitespace content are rejected before execution.
 `),
 		UsageLines: []string{
 			"dbx tx <conn> --plan <path.json>",
@@ -274,7 +277,7 @@ func newImportCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import file <path> <conn> <table>",
 		Short: "Load CSV or JSON rows into a table",
-		Long:  "Use import to load CSV or JSON files into one table.",
+		Long:  "Use import to load UTF-8 CSV or JSON files, with or without BOM, into one table.\nJSON input must contain one document. Integers within int64 are preserved exactly;\nlarger integers and high precision numbers bind as exact text, subject to the target column type.",
 		UsageLines: []string{
 			"dbx import file <path> <conn> <table>",
 		},

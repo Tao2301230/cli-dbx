@@ -77,6 +77,9 @@ Flat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.confi
 Oracle/DM/SQL Server also support driver = "odbc" with driver_path and odbc_driver.
 Drivers are verified before launch; no PATH lookup or automatic download.
 
+Config, SQL, transaction JSON, CSV and JSON input files accept UTF-8 with or without BOM.
+SQLite filesystem paths preserve spaces, Unicode, # and literal percent signs.
+
 It keeps connection management explicit, separates query/update/schema/admin actions,
 and returns results in formats that work well in terminals and scripts.
 `),

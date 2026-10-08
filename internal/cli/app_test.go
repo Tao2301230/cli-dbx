@@ -837,7 +837,7 @@ func makeSQLiteFixtureWithExtras(t *testing.T, rows int, extras string) string {
 	raw := fmt.Sprintf(`
 [connection]
 engine = "sqlite"
-path = "%s"
+path = %q
 allow_actions = ["query", "update", "schema"]
 tags = ["local"]
 %s
@@ -884,13 +884,14 @@ func makeSQLiteRelationFixtureWithExtras(t *testing.T, extras string) string {
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	raw := `
+	raw := fmt.Sprintf(`
 [connection]
 engine = "sqlite"
-path = "` + dbPath + `"
+path = %q
 allow_actions = ["query"]
 tags = ["local"]
-` + extras
+%s
+`, dbPath, extras)
 	if err := os.WriteFile(filepath.Join(configDir, "local-sqlite.toml"), []byte(raw), 0o600); err != nil {
 		t.Fatal(err)
 	}

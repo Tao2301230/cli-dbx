@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 func TestLoadNamedUsesDefaultConfigDirAndNormalizesRelativePaths(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv(agentConfigHomeEnv, "")
 
 	configDir := filepath.Join(home, ".config", "dbx")
@@ -58,6 +60,7 @@ func TestDefaultConfigUsesAgentConnectionThenSystemFallback(t *testing.T) {
 	agentHome := t.TempDir()
 	systemHome := filepath.Join(home, ".config")
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv(agentConfigHomeEnv, agentHome)
 
 	writeProfile := func(dir, name, database string) {
@@ -105,6 +108,7 @@ func TestDefaultConfigUsesSharedAgentConfigHomeAndIgnoresLegacyEnvironment(t *te
 	legacySystemHome := t.TempDir()
 	xdgConfigHome := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv(agentConfigHomeEnv, agentHome)
 	t.Setenv("DBX_AGENT_CONFIG_HOME", legacyDBXHome)
 	t.Setenv("AP_SYSTEM_XDG_CONFIG_HOME", legacySystemHome)
@@ -152,6 +156,7 @@ func TestDefaultConfigDoesNotFallbackWhenAgentConnectionIsInvalid(t *testing.T) 
 	agentHome := t.TempDir()
 	systemHome := filepath.Join(home, ".config")
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv(agentConfigHomeEnv, agentHome)
 	for _, dir := range []string{agentHome, systemHome} {
 		if err := os.MkdirAll(filepath.Join(dir, "dbx"), 0o700); err != nil {
@@ -174,6 +179,7 @@ func TestExplicitConfigDoesNotUseAgentFallback(t *testing.T) {
 	agentHome := t.TempDir()
 	explicitDir := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv(agentConfigHomeEnv, agentHome)
 	if err := os.MkdirAll(filepath.Join(agentHome, "dbx"), 0o700); err != nil {
 		t.Fatal(err)
@@ -190,6 +196,7 @@ func TestExplicitConfigErrorsDoNotFallback(t *testing.T) {
 	home := t.TempDir()
 	agentHome := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv(agentConfigHomeEnv, agentHome)
 
 	writeProfile := func(dir, name string) {
@@ -471,7 +478,7 @@ func TestLoadNamedNormalizesDriverPath(t *testing.T) {
 		{"~/.config/dbx/drivers/dbx-driver-oracle-2.0.0", filepath.Join(home, ".config", "dbx", "drivers", "dbx-driver-oracle-2.0.0")},
 		{filepath.ToSlash(filepath.Join(dir, "absolute driver")), filepath.Join(dir, "absolute driver")},
 	} {
-		raw := "[connection]\nengine='oracle'\ndriver_path='" + tc.input + "'\nallow_actions=['query']\n"
+		raw := fmt.Sprintf("[connection]\nengine='oracle'\ndriver_path=%q\nallow_actions=['query']\n", tc.input)
 		if err := os.WriteFile(filepath.Join(dir, "remote.toml"), []byte(raw), 0600); err != nil {
 			t.Fatal(err)
 		}
@@ -482,5 +489,50 @@ func TestLoadNamedNormalizesDriverPath(t *testing.T) {
 		if filepath.Clean(profile.Connection.DriverPath) != tc.want {
 			t.Fatalf("driver_path = %q, want %q", profile.Connection.DriverPath, tc.want)
 		}
+	}
+}
+
+func TestLoadNamedAcceptsUTF8BOMAndPreservesEmbeddedFEFF(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "remote.toml")
+	raw := "\xef\xbb\xbf" + "[connection]\nengine='oracle'\ndriver_path='drivers/dbx-driver-oracle-1.0.0'\nuser='a\ufeffb'\nallow_actions=['query']\n"
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	profile, err := LoadNamed(path, "remote")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if profile.Connection.User != "a\ufeffb" || profile.Connection.DriverPath != filepath.Join(dir, "drivers", "dbx-driver-oracle-1.0.0") {
+		t.Fatalf("BOM config changed fields: %#v", profile.Connection)
+	}
+	profiles, _, err := List(dir)
+	if err != nil || len(profiles) != 1 || profiles[0].Connection.User != "a\ufeffb" {
+		t.Fatalf("BOM config list = %#v, %v", profiles, err)
+	}
+}
+
+func TestLoadNamedPreservesSQLiteSpecialPaths(t *testing.T) {
+	dir := t.TempDir()
+	for _, tc := range []struct{ input, want string }{
+		{":memory:", ":memory:"},
+		{":memory:?cache=shared", ":memory:?cache=shared"},
+		{"file:test.db?mode=ro", "file:test.db?mode=ro"},
+		{"sqlite:test.db?mode=ro", "sqlite:test.db?mode=ro"},
+		{"data/test.db", filepath.Join(dir, "data", "test.db")},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			raw := fmt.Sprintf("[connection]\nengine='sqlite'\npath=%q\nallow_actions=['query']\n", tc.input)
+			if err := os.WriteFile(filepath.Join(dir, "local.toml"), []byte(raw), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			profile, err := LoadNamed(dir, "local")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if profile.Connection.Path != tc.want {
+				t.Fatalf("sqlite path = %q, want %q", profile.Connection.Path, tc.want)
+			}
+		})
 	}
 }

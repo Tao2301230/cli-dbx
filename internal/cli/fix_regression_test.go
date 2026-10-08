@@ -19,11 +19,7 @@ import (
 
 func fixFixture(t *testing.T) (string, *sql.DB) {
 	t.Helper()
-	dir, err := os.MkdirTemp("/private/tmp", "dbx-cli-fix-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "test.db")
 	database, err := sql.Open("sqlite", dbPath)
 	if err != nil {

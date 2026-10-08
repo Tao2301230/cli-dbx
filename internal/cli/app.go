@@ -25,6 +25,7 @@ import (
 	"github.com/linlay/cli-dbx/internal/secret"
 	"github.com/linlay/cli-dbx/internal/sqlanalyzer"
 	"github.com/linlay/cli-dbx/internal/sqlclass"
+	"github.com/linlay/cli-dbx/internal/textfile"
 )
 
 type App struct{}
@@ -870,7 +871,7 @@ func readSQL(command, inline, path string) (string, error) {
 	case inline != "":
 		return inline, nil
 	case path != "":
-		buf, err := os.ReadFile(path)
+		buf, err := textfile.ReadFile(path)
 		return string(buf), err
 	default:
 		return "", fmt.Errorf("%s requires SQL text or: %s file <conn> <path>", command, command)
@@ -884,9 +885,16 @@ func readTxPlan(path string) (db.TxPlan, error) {
 	}
 	defer file.Close()
 	var plan db.TxPlan
-	decoder := json.NewDecoder(file)
+	decoder := json.NewDecoder(textfile.Reader(file))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&plan); err != nil {
+		return db.TxPlan{}, err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			err = errors.New("transaction plan must contain a single JSON document")
+		}
 		return db.TxPlan{}, err
 	}
 	if len(plan.Steps) == 0 {
@@ -930,7 +938,7 @@ func txResultData(result db.TxRunResult) map[string]any {
 func readImportFile(path string) ([]string, []map[string]any, error) {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".json":
-		buf, err := os.ReadFile(path)
+		buf, err := textfile.ReadFile(path)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -963,7 +971,7 @@ func readImportFile(path string) ([]string, []map[string]any, error) {
 			return nil, nil, err
 		}
 		defer file.Close()
-		reader := csv.NewReader(file)
+		reader := csv.NewReader(textfile.Reader(file))
 		records, err := reader.ReadAll()
 		if err != nil {
 			return nil, nil, err
