@@ -25,6 +25,8 @@ tags = ["dev"]
 
 `--config <path>` 可以指定单个 TOML 文件或配置目录；使用后只读取该来源。
 
+Windows 默认目录为 `%USERPROFILE%\.config\dbx`。配置使用 UTF-8，可带 BOM；PowerShell 写入或追加时显式指定 `-Encoding UTF8`。TOML 路径可用单引号 `path = 'C:\data\demo.db'`，双引号中的反斜杠需要转义。SQL、事务 JSON、导入 CSV/JSON 同样支持 UTF-8 BOM，不自动转换 UTF-16。
+
 ## Engine
 
 主程序内置 `mysql`、`sqlite` / `sqlite3`。以下引擎需要独立驱动包：
@@ -50,7 +52,8 @@ allow_actions = ["query"]
 allow_tables = ["users"]
 ```
 
-SQLite 相对 `path` 以配置文件目录为基准。
+SQLite 普通相对 `path` 以配置文件目录为基准；显式 `file:` URI 中的相对路径以命令当前目录为基准。
+普通文件名中的空格、中文、`#`、`%` 按字面保留。路径后的 `?mode=ro`、内存库/共享缓存及 `_pragma` 参数继续生效；显式 `file:` URI 保持原语义，其文件名需按 URI 规则编码。
 
 ## 当前字段
 

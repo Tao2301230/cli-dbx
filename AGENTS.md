@@ -41,6 +41,8 @@
   命令分发、参数解析、帮助信息、错误 envelope。
 - `internal/config`
   单连接配置文件加载、路径归一化、密码来源解析。
+- `internal/textfile`
+  标准库 UTF-8 文件读取，移除文件开头至多一个 BOM；正文中的 BOM 保持原样。
 - `internal/secret`
   v1/v2 密文处理、系统凭据库适配和运行时密钥解析。
 - `internal/conn`
@@ -144,6 +146,14 @@ allow_actions = ["query", "update", "schema", "admin"]
 ```
 
 `tx` v1 只允许 `query` 和 `update` 步骤。
+
+计划读取使用 `DisallowUnknownFields` 并检查第二次解码必须返回 `io.EOF`，在数据库执行前拒绝第二个 JSON 文档和尾随垃圾。JSON 导入保留 `UseNumber`、精确数字绑定和 EOF 检查；不得为了迁移文件编码修复而退回 `json.Unmarshal` 到浮点数字。
+
+### 文件编码与 SQLite 路径
+
+配置、SQL、事务 JSON、CSV 和 JSON 导入使用 `internal/textfile` 读取，支持带或不带 UTF-8 BOM，不自动转换 UTF-16。Windows 测试同时隔离 `HOME` 和 `USERPROFILE`，TOML 测试路径使用安全引用。
+
+SQLite 普通文件路径编码为 `file:` URI 时，只编码文件名部分并保留原始查询参数。显式 URI 不重复编码；保留 `mode=ro`、内存库、共享缓存与 `_pragma` 行为。打包器的 `--executable` 以明确的暂存区相对普通文件路径指定可执行权限，不依赖构建主机的文件模式；无此参数的既有行为保持不变。
 
 ### 输出 Envelope
 

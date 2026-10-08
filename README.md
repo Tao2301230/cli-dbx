@@ -25,6 +25,13 @@ go build -o ./dbx ./cmd/dbx
 ./dbx version
 ```
 
+Windows PowerShell：
+
+```powershell
+go build -o .\dbx.exe .\cmd\dbx
+.\dbx.exe version
+```
+
 ### 5 分钟跑起来
 
 先创建默认配置目录：
@@ -86,6 +93,7 @@ tags = ["local"]
 - 优先使用 `query` / `update` / `schema` / `admin`
 - 需要原子性的多步动作时，用 `tx`
 - `tx` 只支持 `query` / `update`，不支持 `schema` / `admin`
+- 事务计划必须是一个完整 JSON 文档；未知字段、第二个 JSON 文档和尾随垃圾会在执行前被拒绝
 - 分页读取时继续传回同一条 SQL 和 `--cursor`
 - `update/delete` 的 `WHERE` 必须属于最外层写语句，子查询中的条件不能替代它
 - 写入型 CTE 和对写语句的 `EXPLAIN` 会被拒绝；修改配置的 SQLite `PRAGMA` 使用 `admin`
@@ -100,6 +108,24 @@ tags = ["local"]
 ```
 
 每个连接一个文件，例如 `~/.config/dbx/local-pg.toml`。
+
+Windows 默认目录是 `$env:USERPROFILE\.config\dbx`。TOML 中的 Windows 路径可以写成 `path = 'C:\data\demo.db'`，或使用正斜杠 `path = "C:/data/demo.db"`；双引号中的反斜杠需要转义。
+
+配置、SQL 文件、事务 JSON、导入 CSV 和导入 JSON 支持带或不带 UTF-8 BOM。UTF-16 文件需要先另存为 UTF-8。Windows PowerShell 5.1 的 `>` / `>>` 默认写入 UTF-16，建议明确指定 UTF-8，例如：
+
+```powershell
+$configDir = Join-Path $env:USERPROFILE '.config\dbx'
+New-Item -ItemType Directory -Force $configDir | Out-Null
+@'
+[connection]
+engine = "sqlite"
+path = './demo.db'
+allow_actions = ["query", "update", "schema"]
+'@ | Set-Content -Encoding UTF8 (Join-Path $configDir 'local-sqlite.toml')
+.\dbx.exe conn test local-sqlite
+```
+
+SQLite 普通文件路径中的空格、中文、`#`、`%20` 等按原文件名处理，相对路径以配置文件目录为准。现有路径后的 `?mode=ro`、`?mode=memory&cache=shared` 和 `_pragma` 参数继续生效；也可显式使用 SQLite `file:` URI，URI 内的文件名需要百分号编码，例如 `file:./demo%23one.db?mode=ro`。显式 URI 由 SQLite 解析，其中的相对路径以命令当前目录为准。`:memory:` 和 `:memory:?cache=shared` 保持内存库形式。
 
 ### Agent Platform 专属配置
 
@@ -124,6 +150,8 @@ allow_tables = ["users", "public.audit_*"]
 tags = ["dev", "local"]
 ```
 
+上例引用现有已构建的 `.3` 独立驱动包；本次 `.4` 主程序仍使用协议 v1，可以继续搭配这些驱动。Windows 的程序文件名加 `.exe`，旁边保留对应的 `.exe.json` 清单。
+
 最小 MySQL 例子：
 
 ```toml
@@ -141,6 +169,12 @@ allow_actions = ["query"]
 
 ```bash
 ./dbx secret encrypt
+```
+
+在 Windows PowerShell 中把生成的密码行追加到已有 UTF-8 连接文件时，明确指定编码，并只添加一次：
+
+```powershell
+.\dbx.exe secret encrypt | Add-Content -Encoding UTF8 (Join-Path $configDir 'local-pg.toml')
 ```
 
 无参数模式只提示输入一次数据库密码，终端不会回显输入。需要由智能体或一次性迁移脚本直接调用时，也可以传入一个位置参数：
@@ -269,6 +303,7 @@ go test ./...
 - 旧 v1 密码解不开：确认输入的是加密时使用的 master passphrase
 - 密码来源被禁用：改用 `password = "dbx-aes-gcm:v2:..."`
 - SQLite 路径不对：相对路径是相对于配置文件目录，不是当前工作目录
+- 文件解析失败：保存为 UTF-8；支持 UTF-8 BOM，不自动转换 UTF-16。事务计划及 JSON 导入文件只接受一个 JSON 文档
 - 外部驱动缺失：按[独立驱动安装说明](./docs/driver-process.md)检查 `driver_path` 指定的程序及同名 `.json` 清单，或无版本驱动的默认根目录
 - 驱动清单、平台、协议或 SHA-256 不匹配：重新安装对应平台的完整可信驱动包，不修改摘要绕过校验
 - 外部写操作因超时或进程中断而失败：不要自动重试；提交阶段中断可能无法确定结果，先用只读查询核验
