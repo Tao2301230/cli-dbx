@@ -44,7 +44,7 @@ try {
             $env:GOOS = $goos
             $env:GOARCH = $goarch
             [Environment]::SetEnvironmentVariable("GOTOOLCHAIN", $savedEnvironment["GOTOOLCHAIN"], "Process")
-            if ($driverEngine -eq "oracle") { $env:GOTOOLCHAIN = "go1.26.6" }
+            if ($driverEngine -eq "oracle") { $env:GOTOOLCHAIN = "go1.26.8" }
             Write-Host "building driver $driverEngine for $goos/$goarch"
             Push-Location (Join-Path $repoRoot "drivers/$driverEngine")
             try {

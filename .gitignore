@@ -3,6 +3,7 @@
 /dist/
 /dbx
 /dbx.exe
+__pycache__/
 /examples/**/verification/
 
 # Keep release downloads local, but include the DBX documentation.

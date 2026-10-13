@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-13",
+  "platform": {
+    "os": "darwin",
+    "arch": "arm64",
+    "go_version": "go1.26.8"
+  },
+  "change": "Retain repeated generic certificate, text, Unicode, number, JSON and container implementations in the host; optional modules reference the host without embedding vendor drivers.",
+  "raw_comparison": [
+    {
+      "file": "dbx",
+      "before_raw_bytes": 12070226,
+      "after_raw_bytes": 12981506,
+      "delta_raw_bytes": 911280
+    },
+    {
+      "file": "postgres.dbmod",
+      "before_raw_bytes": 5890186,
+      "after_raw_bytes": 5377907,
+      "delta_raw_bytes": -512279
+    },
+    {
+      "file": "oracle.dbmod",
+      "before_raw_bytes": 3733626,
+      "after_raw_bytes": 2797165,
+      "delta_raw_bytes": -936461
+    },
+    {
+      "file": "dm.dbmod",
+      "before_raw_bytes": 5001690,
+      "after_raw_bytes": 4017077,
+      "delta_raw_bytes": -984613
+    },
+    {
+      "file": "sqlserver.dbmod",
+      "before_raw_bytes": 1910613,
+      "after_raw_bytes": 1793219,
+      "delta_raw_bytes": -117394
+    }
+  ],
+  "before_total_raw_bytes": 28606341,
+  "after_total_raw_bytes": 26966874,
+  "total_raw_savings_bytes": 1639467,
+  "distribution_manifest_bytes": 1226,
+  "current_build": {
+    "schema_version": 1,
+    "host": {
+      "file": "dbx",
+      "sha256": "a9939b34d5ea8a71ce6282ec9922cb945ba5fb9414e1bd259ac15eb63b079794",
+      "raw_bytes": 12981506,
+      "raw_mib": 12.380129,
+      "gzip_bytes": 5059370,
+      "gzip_mib": 4.824991
+    },
+    "modules": [
+      {
+        "file": "postgres.dbmod",
+        "sha256": "37d438f2bd99c356dbe561abe9f20c3c9c935ccca7ab1666f7b4c3080edc9d42",
+        "raw_bytes": 5377907,
+        "raw_mib": 5.128772,
+        "gzip_bytes": 1538113,
+        "gzip_mib": 1.466859
+      },
+      {
+        "file": "oracle.dbmod",
+        "sha256": "4952dd8273407c4f7b5769df517899012f9bb6ba2c9f68331480995f5eeb4111",
+        "raw_bytes": 2797165,
+        "raw_mib": 2.667584,
+        "gzip_bytes": 940067,
+        "gzip_mib": 0.896518
+      },
+      {
+        "file": "dm.dbmod",
+        "sha256": "d357e4398b975bf1b78b720e064993609bd81f31bb4c6abd3148a4e267478321",
+        "raw_bytes": 4017077,
+        "raw_mib": 3.830983,
+        "gzip_bytes": 1576494,
+        "gzip_mib": 1.503462
+      },
+      {
+        "file": "sqlserver.dbmod",
+        "sha256": "0bfc85a14e5c14465351d1895d3d435fc6bd49f1d4da43703de44477e73de108",
+        "raw_bytes": 1793219,
+        "raw_mib": 1.710147,
+        "gzip_bytes": 625051,
+        "gzip_mib": 0.596095
+      }
+    ],
+    "go_version": "go1.26.8",
+    "os": "darwin",
+    "arch": "arm64",
+    "prelink": {
+      "postgres": {
+        "engine": "postgres",
+        "host_symbols": 24858,
+        "code_bytes": 2479328,
+        "data_bytes": 1070744,
+        "prelink": {
+          "RelocationsBefore": 114418,
+          "RelocationsAfter": 81083,
+          "ResolvedRelocations": 33335,
+          "ResolvedByType": {
+            "R_ADDRARM64": 143,
+            "R_ADDROFF": 12896,
+            "R_ADDROFF|R_WEAK": 930,
+            "R_CALLARM64": 3436,
+            "R_CALLARM64|R_WEAK": 3,
+            "R_METHODOFF": 15927
+          },
+          "RetainedCodeReserveBytes": 970360,
+          "RetainedResolvedReserveBytes": 58408,
+          "ReclaimedCodeBytes": 0
+        }
+      },
+      "oracle": {
+        "engine": "oracle",
+        "host_symbols": 24858,
+        "code_bytes": 1523616,
+        "data_bytes": 480432,
+        "prelink": {
+          "RelocationsBefore": 64683,
+          "RelocationsAfter": 54253,
+          "ResolvedRelocations": 10430,
+          "ResolvedByType": {
+            "R_ADDRARM64": 96,
+            "R_ADDROFF": 4045,
+            "R_ADDROFF|R_WEAK": 674,
+            "R_CALLARM64": 2358,
+            "R_CALLARM64|R_WEAK": 8,
+            "R_METHODOFF": 3249
+          },
+          "RetainedCodeReserveBytes": 724056,
+          "RetainedResolvedReserveBytes": 40032,
+          "ReclaimedCodeBytes": 0
+        }
+      },
+      "dm": {
+        "engine": "dm",
+        "host_symbols": 24858,
+        "code_bytes": 1649552,
+        "data_bytes": 1273184,
+        "prelink": {
+          "RelocationsBefore": 68234,
+          "RelocationsAfter": 48952,
+          "ResolvedRelocations": 19282,
+          "ResolvedByType": {
+            "R_ADDRARM64": 256,
+            "R_ADDROFF": 6056,
+            "R_ADDROFF|R_WEAK": 923,
+            "R_CALLARM64": 4615,
+            "R_CALLARM64|R_WEAK": 10,
+            "R_METHODOFF": 7422
+          },
+          "RetainedCodeReserveBytes": 615312,
+          "RetainedResolvedReserveBytes": 79984,
+          "ReclaimedCodeBytes": 0
+        }
+      },
+      "sqlserver": {
+        "engine": "sqlserver",
+        "host_symbols": 24858,
+        "code_bytes": 526496,
+        "data_bytes": 916096,
+        "prelink": {
+          "RelocationsBefore": 21812,
+          "RelocationsAfter": 16959,
+          "ResolvedRelocations": 4853,
+          "ResolvedByType": {
+            "R_ADDRARM64": 25,
+            "R_ADDROFF": 1918,
+            "R_ADDROFF|R_WEAK": 308,
+            "R_CALLARM64": 1012,
+            "R_CALLARM64|R_WEAK": 3,
+            "R_METHODOFF": 1587
+          },
+          "RetainedCodeReserveBytes": 202504,
+          "RetainedResolvedReserveBytes": 16792,
+          "ReclaimedCodeBytes": 0
+        }
+      }
+    }
+  },
+  "validation": {
+    "host_and_modules": "fresh native build succeeded with scripts/build-modules.py --offline",
+    "root_go_tests": "go test ./... and go test -tags=dbmod ./... passed before commit",
+    "python_module_tests": "All 8 build/module tests passed, including four engine load/register/open-close/GC checks, host symbol retention/vendor absence and PostgreSQL CLI protocol fixture query/policy checks",
+    "red_test": "Before migration, the shared-host symbol test failed for all six representative generic functions.",
+    "live_databases": "not tested; the PostgreSQL fixture implements a local test protocol endpoint",
+    "windows_runtime": "not tested; this report contains only macOS arm64 sizes",
+    "runtime_memory": "not measured; all sizes are on-disk file bytes, not RAM",
+    "review": "Public shared-code migration reviewed independently; canonical-host and immutable-snapshot findings closed in final review; PC-name codec passed targeted review, four archived driver graph roundtrips and 10-second fuzz (626412 executions). No unresolved findings within reviewed scope.",
+    "nested_go_tests": "drivers/postgres, drivers/oracle, drivers/dm, drivers/sqlserver and third_party/goloader go test ./... passed",
+    "windows_host_crossbuild": "Current source compiled for windows/amd64; not executed",
+    "odbc_windows_crossbuild": "Existing ODBC adapter compiled for windows/amd64; macOS native ODBC tests unavailable without sql.h"
+  }
+}

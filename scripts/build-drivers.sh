@@ -8,7 +8,7 @@ Usage: scripts/build-drivers.sh [--host | --os <os> --arch <arch>] [--engine <en
 Build and package independent postgres/oracle/dm/sqlserver drivers.
 Default: all four engines for darwin/linux/windows, amd64/arm64.
 --host builds only the current Go host platform; --engine selects one driver.
-Oracle uses GOTOOLCHAIN=go1.26.6 only for its module. No packages are uploaded.
+Oracle uses GOTOOLCHAIN=go1.26.8 only for its module. No packages are uploaded.
 EOF
 }
 
@@ -75,7 +75,7 @@ for target in "${targets[@]}"; do
     if [[ "$goos" == windows ]]; then executable+=.exe; fi
     binary="$stage_dir/$executable"
     build_env=(CGO_ENABLED=0 "GOOS=$goos" "GOARCH=$goarch")
-    if [[ "$engine" == oracle ]]; then build_env+=(GOTOOLCHAIN=go1.26.6); fi
+    if [[ "$engine" == oracle ]]; then build_env+=(GOTOOLCHAIN=go1.26.8); fi
     echo "building driver $engine for $goos/$goarch"
     (
       cd "$repo_root/drivers/$engine"

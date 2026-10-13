@@ -28,6 +28,7 @@ Drivers:
   Select a versioned executable with connection.driver_path; its manifest is <executable>.json.
   Flat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.config/dbx/drivers.
   Oracle/DM/SQL Server also support driver = "odbc" with driver_path and odbc_driver.
+  Shared-host builds support driver = "module" with <engine>.dbmod and its .json manifest.
   Drivers are verified before launch; no PATH lookup or automatic download.
 
 Flow:

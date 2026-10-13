@@ -26,7 +26,7 @@
 - 驱动：
   - 主程序内置 MySQL：`go-sql-driver/mysql`，SQLite：`modernc.org/sqlite`
   - 独立进程：PostgreSQL、Oracle、达梦、SQL Server，各有 `drivers/<engine>/go.mod`
-  - Oracle 使用 Go 1.26.6，仅独立模块受此工具链要求约束；根模块保持 Go 1.22
+  - 此共享宿主开发分支统一固定 Go 1.26.8，宿主、模块和公共依赖必须一致
 - 配置格式：TOML
 - 构建与测试：`go build`、`go test`
 - 发布：仓库内 `scripts/release/build.sh`
@@ -59,6 +59,12 @@
   共享 SQL 执行、元数据、导入与整批事务，不导入厂商驱动。
 - `internal/driverprocess`
   驱动包校验、私有管道协议、进程取消与回收。
+- `internal/drivermodule`、`internal/dbmodformat`
+  可选 Go 模块的发现、校验、动态装载及 DBXMOD2 文件格式；`shared.go` 保留宿主公共实现。
+- `modules/postgres`、`modules/oracle`、`modules/dm`、`modules/sqlserver`
+  `.dbmod` 的注册入口，共用根 go.mod 的工具链与依赖；区别于下述独立可执行驱动。
+- `cmd/dbmod-pack`、`scripts/build-modules.py`、`third_party/goloader`
+  离线模块打包、规范构建编排及带许可证和修补记录的 Go 对象加载器。
 - `drivers/postgres`、`drivers/oracle`、`drivers/dm`、`drivers/sqlserver`
   独立模块及可执行入口，各自注册对应数据库驱动。
 - `drivers/odbc`
@@ -221,13 +227,15 @@ SQLite 普通文件路径编码为 `file:` URI 时，只编码文件名部分并
 
 ## 8. 开发流程
 
+此分支的完整测试需要私有 Go 1.26.8 SDK；在新机器上先按文末「跨机器开发交接」构建并设置 SDK，再执行以下命令。仅安装原版 Go 后直接运行 `go test ./...`，会因缺少 `cmd/objfile` 内部包而失败。
+
 本地开发常用命令：
 
 ```bash
 go build -o ./dbx ./cmd/dbx
 go test ./...
 (cd drivers/postgres && go test ./...)
-(cd drivers/oracle && GOTOOLCHAIN=go1.26.6 go test ./...)
+(cd drivers/oracle && GOTOOLCHAIN=go1.26.8 go test ./...)
 (cd drivers/dm && go test ./...)
 (cd drivers/sqlserver && go test ./...)
 ```
@@ -301,3 +309,87 @@ go test ./...
 - 所有 Go/ODBC 包保持不同文件名和清单；禁止因连接失败自动切换路线。协议暂保持 v1，新增连接字段向后兼容原有 Go 适配器。
 
 安装和构建说明见 [ODBC 独立进程](./docs/odbc-driver-process.md)。
+
+## 共享宿主模块（开发分支）
+
+- `driver = "module"` 选择四种 Go 厂商驱动的 `.dbmod` 模块。`Spec.Module` 记录传输选择，`Spec.Driver` 保持 database/sql 的实际驱动名。原 native 进程和 ODBC 路线保持显式选择，不自动回退。
+- `scripts/build-modules.py` 以 `-tags=dbmod -trimpath -buildvcs=false -ldflags=-w` 构建共享宿主及独立模块。禁止 `-s`，宿主符号表是离线打包和运行时链接的依赖。普通构建不包含模块加载器。
+- 主程序源码不导入四个厂商驱动；`modules/<engine>` 是模块注册入口，Oracle 另导出连接器准备函数。构建依赖统一在根 go.mod 固定，原独立驱动的嵌套模块仍可构建。
+- `internal/drivermodule/shared.go` 显式保留模块重复使用的通用证书、文本、Unicode、数值、JSON 和容器实现，供打包器引用宿主符号。类型注册在 `goloader.RegSymbol` 之后执行，不调用被保留的函数；禁止借此向宿主引入厂商驱动。迁移同时比较宿主增长、模块减少和整体未压缩净大小。
+- 模块以 `<engine>.dbmod` 与 `<engine>.dbmod.json` 分发，按 driver_path 或已有目录优先级发现。清单固定 schema、Go 版本、平台、引擎、模块名及模块/宿主 SHA-256；父进程和 worker 都先验证。模块是当前用户信任的本机代码，不是沙箱。
+- 父进程启动自身 `dbx --internal-module-worker`，通过原私有协议发送凭据和操作。四个模块复用同一份磁盘宿主，worker 的运行时内存各自独立。取消、回收、整批事务/导入和不重试语义沿用 driverprocess。
+- worker 在同一 OS 线程完成 Go 模块重定位与发布；整个操作保留 CodeModule、类型及 GC 元数据，不支持主动卸载。厂商初始化不得解析 worker 命令行。
+- DBXMOD2 使用紧凑编号、前缀字典、变长整数和稀疏 NOP 预留区描述；磁盘省略的 NOP 在内存中复原，不能宣称等量减少运行时内存。安全 prelink 只移除地址基址无关的重定位；保留 stackobject、deferreturn、接口标记和必要元数据。
+- 体积报告分别记录未压缩模块和 gzip 对照。真实数据库兼容、TLS、Windows 执行须有实际验证证据，交叉构建不替代运行验证。
+- 第三方加载器来源及本地修补记录在 `third_party/goloader/DBX-PATCHES.md`，构建只准备私有 SDK，不修改全局 Go 安装。
+
+### 跨机器开发交接（2026-10-13）
+
+**分支与用户目标。** 当前开发位于 `codex/dbx-shared-host-modules`，从 `b5b7c1b` 开始。目标是一份约 12 MB 级别的共享宿主，加上四个按需复制、按需加载的数据库模块，减少独立 Go 可执行驱动重复携带基础代码的磁盘开销。验收以未压缩文件大小为主；同时报告宿主增长、单模块减少和整体净变化。用户使用多个 terminal 分别启动 CLI，不要求共享常驻服务。当前实现仍启动自身的内部 worker，尚未改成 CLI 主进程直接执行数据库操作；不要将「不需要业务并发」解释为可以删除 Go GC、调度器、类型或栈元数据。
+
+**已实现的内容与入口。**
+
+- `internal/conn/resolve.go` 和 `internal/driverprocess/client.go`：解析 `driver = "module"`，在现有策略检查之后校验模块并启动同一个宿主文件；原 native/ODBC 路线保留。
+- `cmd/dbx/module_worker.go`：加载所选模块并调用原 `driverprocess.Serve`；Oracle 初始化前标记全局 flag 已解析，避免厂商代码解析私有 worker 参数。`module_disabled.go` 保留未启用模块的普通构建。
+- `internal/drivermodule/manifest.go`：绑定引擎、平台、Go 版本与确切宿主/模块 SHA-256；读取有大小限制的不可变快照，校验和解码使用同一份字节，不能退回到校验后重读原文件。
+- `internal/drivermodule/load.go`：先注册宿主符号，再调用 `registerSharedHostTypes`；在锁定的 OS 线程上链接模块，整个操作保留加载句柄。Oracle 额外提供 `Prepare(*conn.Spec) error`，其他入口及厂商实现见 `modules/<engine>/main.go`。
+- `internal/drivermodule/shared.go`：显式保留通用证书、文本、Unicode、数值、JSON 和容器函数，让四模块引用宿主实现；函数值只用于保留和注册类型，不执行证书、网络或用户查询。
+- `internal/dbmodformat/`：DBXMOD2 前缀字典、变长整数、稀疏 NOP 与 PC 函数名称引用；解码逐字节恢复原布局，保留 GC、类型和栈信息。旧 DBXMOD1 只保留测试夹具，生产加载器不兼容旧格式。
+- `third_party/goloader/link/prelink.go`：只提前解析可证明与加载基址无关的重定位，不移动代码，不删除 stackobject、deferreturn 或接口标记。修改此处须同时检查运行时 `relocate.go` 的公式。
+- `scripts/build-modules.py` 和 `cmd/dbmod-pack`：先生成宿主，再按其符号闭包打包四模块。`--host` 必须与当前源码、SDK、依赖和参数重建的规范宿主字节一致；只匹配 Go 版本和平台不足以保证 ABI。低层 packer 是内部工具，不能当作任意宿主的插件转换器。
+
+**新机器构建。** 克隆代码并切换到本分支后，在仓库根目录执行。需要原版 Go **1.26.8**、Python 3；macOS arm64 还需要 Xcode Command Line Tools。首次运行不要加 `--offline`，先让 Go 获取 go.mod/go.sum 固定的依赖；缓存齐全后才使用该选项。无需下载本次开发机的实验目录。
+
+macOS/Linux shell（将 Go 路径替换成本机原版 SDK）：
+
+```bash
+python3 scripts/build-modules.py \
+  --go /path/to/go1.26.8/bin/go \
+  --out dist/modules
+export GOROOT="$PWD/dist/modules/_build/go1.26.8"
+export PATH="$GOROOT/bin:$PATH"
+export GOTOOLCHAIN=local
+```
+
+Windows PowerShell 的原生构建入口如下，要求 PATH 中的 `go.exe` 已是 1.26.8；这套模块原生构建与执行流程仍待 Windows 机器验证：
+
+```powershell
+python scripts/build-modules.py --go (Get-Command go).Source --out dist/modules
+$env:GOROOT = Join-Path $PWD "dist/modules/_build/go1.26.8"
+$env:PATH = "$env:GOROOT\bin;$env:PATH"
+$env:GOTOOLCHAIN = "local"
+```
+
+上述 SDK 路径适用于从原版 SDK 首次构建：脚本复制 SDK，并将 `src/cmd/internal` 复制到私有 SDK 的 `src/cmd/objfile`。若输入本身已是准备好的私有 SDK，脚本会直接复用，应将 GOROOT 指向实际输入 SDK。不要修改全局 SDK，不要运行 `go env -w`。完整模块打包要求在目标 OS/架构原生执行；`--goos windows --goarch amd64 --host-only` 只能交叉构建宿主，不能据此宣称四模块已可在 Windows 使用。
+
+**接手后的验证。** 设置好上述私有 SDK 后运行：
+
+```bash
+go test ./...
+go test -tags=dbmod ./...
+(cd drivers/postgres && go test ./...)
+(cd drivers/oracle && go test ./...)
+(cd drivers/dm && go test ./...)
+(cd drivers/sqlserver && go test ./...)
+(cd third_party/goloader && go test ./...)
+DBX_MODULE_HOST="$PWD/dist/modules/dbx" \
+  python3 -B -m unittest discover -s scripts/tests -v
+```
+
+Windows 的 Python 测试先设置 `$env:DBX_MODULE_HOST = Join-Path $PWD "dist/modules/dbx.exe"`，再执行 `python -B -m unittest discover -s scripts/tests -v`；各嵌套模块测试在其目录执行。Python 全套当前共 8 项，包含规范宿主拒绝、公共符号保留/厂商隔离、四模块加载及 PostgreSQL 本地协议查询。PostgreSQL 替身需要监听本机 `127.0.0.1`，沙箱限制监听时应申请相应测试权限，不能把限制当作数据库失败。省略 `DBX_MODULE_HOST` 会跳过产物验证，不能把跳过称为四模块通过。额外的旧完整图测试依赖开发机历史归档，其他机器可以跳过；应以新构建产物的四模块加载检查和本地协议测试作为可复现的接手验证。
+
+**当前大小基线。** macOS arm64、Go 1.26.8 正式构建的原始字节数如下，五文件合计 **26,966,874 bytes**（26.97 MB，25.72 MiB）；四份清单另占 1,226 bytes。MB 是 1,000,000 bytes，MiB 是 1,048,576 bytes。
+
+| 文件 | 未压缩 bytes |
+| --- | ---: |
+| `dbx` | 12,981,506 |
+| `postgres.dbmod` | 5,377,907 |
+| `oracle.dbmod` | 2,797,165 |
+| `dm.dbmod` | 4,017,077 |
+| `sqlserver.dbmod` | 1,793,219 |
+
+公共实现迁移使四模块合计减少 2,550,747 bytes、宿主增加 911,280 bytes，整体净减少 1,639,467 bytes。这不是已达体积下限或已达到内嵌增量的承诺。每轮优化重新构建并看 `dist/modules/sizes.json`；平台变化后必须重新测量，不能沿用本表作为 Windows/Linux 大小。
+
+**已验证与后续工作。** 已通过 macOS arm64 四模块加载/注册/连接器构造/关闭/GC、CLI PostgreSQL 本地替身的精确整数/小数/中文传输及策略检查、根与四嵌套驱动测试、加载器测试和 8 项 Python 测试。Windows amd64 当前宿主及原 ODBC 适配器只通过交叉构建。尚未验证真实四库认证、TLS、真实事务/导入、Windows 模块原生执行、其他平台执行或运行时内存；macOS 原生 ODBC 测试还需要 `sql.h`/unixODBC。继续开发优先在有相应环境的机器补足这些证据，再逐项评估剩余重复符号/元数据的可共享性。
+
+**协作资料与产物。** 安装与构建说明见 [共享宿主模块](./docs/shared-host-modules.md)，完整大小、摘要与验证边界见 [验证记录](./docs/shared-host-modules-validation.json)，设计与已完成计划见 [设计](./docs/superpowers/specs/2026-10-13-shared-host-modules-design.md) 和 [计划](./docs/superpowers/plans/2026-10-13-shared-host-modules.md)。打包只分发宿主、所需 `.dbmod` 及对应清单；`dist/`、`_build/`、私有 SDK、缓存与 `/private/tmp` 实验文件均不随 Git 提交，另一台机器应重新构建。重新构建/签名宿主后须重新生成匹配模块，不得混用旧模块。当前 VERSION 仍为 `v0.2.0-driver-process.4`，本开发尚未发布；正式发布前需按发布流程确定新版本并接入模块发布包。

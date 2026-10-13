@@ -14,7 +14,7 @@
 
 ### 前置要求
 
-- Go 1.22+，或直接下载 Release 二进制
+- 此开发分支使用 Go 1.26.8；使用已构建的二进制不需要安装 Go
 - 本地可访问的数据库；MySQL、SQLite 开箱即用
 - PostgreSQL、Oracle、达梦、SQL Server 需先安装与本机平台匹配的[独立驱动包](./docs/driver-process.md)
 
@@ -255,6 +255,8 @@ Windows 使用 `Expand-Archive` 或其他 zip 工具解压后运行 `dbx.exe ver
 MySQL、SQLite 随主程序和 Platform 连接器提供。四种外部驱动分别发布为 `dbx-driver-<engine>_<version>_<os>_<arch>.tar.gz`（Windows 为 `.zip`），解压后直接平铺两个文件：带版本的可执行程序和 `<程序文件名>.json`（Windows 为 `.exe` 与 `.exe.json`）。连接用 `driver_path` 精确指定程序，支持 `~`，相对路径以连接 TOML 所在目录为准；多个版本可共存。未设置 `driver_path` 时，只在 `driver_dir`、`DBX_DRIVER_DIR`、`~/.config/dbx/drivers` 依次选定的根目录查找无版本的 `dbx-driver-<engine>[.exe]`，不自动选择版本。DBX 不从 PATH 找驱动，也不自动下载；清单、平台或摘要错误会阻止加载。安装和本机构建步骤见 [独立驱动](./docs/driver-process.md)。
 
 Oracle、达梦、SQL Server 还可配置 `driver = "odbc"`，通过 `driver_path` 选择独立 ODBC 适配程序，`odbc_driver` 指向另行安装的厂商库。Mac 的 ODBC 包包含平铺的 unixODBC 运行库；Windows x64 使用系统 ODBC Driver Manager。详见 [ODBC 独立进程](./docs/odbc-driver-process.md)。
+
+本分支还提供共享宿主模块构建：`python3 scripts/build-modules.py --go /path/to/go1.26.8/bin/go --out dist/modules`。使用生成的 `dbx`，将所需的 `<engine>.dbmod` 和 `<engine>.dbmod.json` 放入驱动目录，配置 `driver = "module"`。每个模块绑定构建时的宿主；更新宿主后须使用匹配模块。构建、安装及验证范围见 [共享宿主模块](./docs/shared-host-modules.md)。
 
 维护者的构建、打包、发布流程见 [AGENTS.md](./AGENTS.md)。
 

@@ -20,6 +20,7 @@ type Spec struct {
 	Name           string
 	Engine         string
 	Driver         string
+	Module         bool `json:"-"`
 	ODBC           *ODBCConfig
 	DriverDir      string
 	DriverPath     string
@@ -102,9 +103,10 @@ func Resolve(ctx context.Context, in ResolveInput) (Spec, error) {
 		SecretSources: map[string]string{},
 	}
 	selectedDriver := strings.ToLower(strings.TrimSpace(profile.Connection.Driver))
-	if selectedDriver != "" && selectedDriver != "native" && selectedDriver != "odbc" {
-		return Spec{}, fmt.Errorf("connection driver must be native or odbc")
+	if selectedDriver != "" && selectedDriver != "native" && selectedDriver != "odbc" && selectedDriver != "module" {
+		return Spec{}, fmt.Errorf("connection driver must be native, module or odbc")
 	}
+	spec.Module = selectedDriver == "module"
 	if selectedDriver == "odbc" {
 		if spec.Engine != "oracle" && spec.Engine != "dm" && spec.Engine != "sqlserver" {
 			return Spec{}, fmt.Errorf("ODBC is supported only for oracle, dm, and sqlserver")
@@ -189,6 +191,9 @@ func Resolve(ctx context.Context, in ResolveInput) (Spec, error) {
 
 func finalize(spec Spec) (Spec, error) {
 	spec.Engine = normalizeEngine(spec.Engine)
+	if spec.Module && spec.Engine != "postgres" && spec.Engine != "oracle" && spec.Engine != "dm" && spec.Engine != "sqlserver" {
+		return Spec{}, fmt.Errorf("module drivers support only postgres, oracle, dm and sqlserver")
+	}
 	if spec.ODBC == nil {
 		if err := validateExternalDSN(spec.Engine, spec.DSN); err != nil {
 			return Spec{}, err

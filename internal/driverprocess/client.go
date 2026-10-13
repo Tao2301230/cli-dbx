@@ -2,12 +2,15 @@ package driverprocess
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"time"
 
 	"github.com/linlay/cli-dbx/internal/conn"
+	"github.com/linlay/cli-dbx/internal/drivermodule"
 )
 
 func Call(ctx context.Context, spec conn.Spec, req Request) (response Response, callErr error) {
@@ -26,7 +29,7 @@ func Call(ctx context.Context, spec conn.Spec, req Request) (response Response, 
 	if err := ctx.Err(); err != nil {
 		return Response{}, err
 	}
-	path, err := executable(spec)
+	path, args, err := command(spec)
 	if err != nil {
 		return Response{}, err
 	}
@@ -36,7 +39,7 @@ func Call(ctx context.Context, spec conn.Spec, req Request) (response Response, 
 	// Copy only connection fields; policy and key-store details stay in DBX.
 	req.Version, req.Engine = ProtocolVersion, spec.Engine
 	req.Spec = conn.Spec{Engine: spec.Engine, Driver: spec.Driver, ODBC: spec.ODBC, DSN: spec.DSN, Host: spec.Host, Port: spec.Port, User: spec.User, Database: spec.Database, Schema: spec.Schema, Timeout: timeout}
-	cmd := exec.CommandContext(ctx, path)
+	cmd := exec.CommandContext(ctx, path, args...)
 	cmd.Stderr = io.Discard
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -79,6 +82,30 @@ func Call(ctx context.Context, spec conn.Spec, req Request) (response Response, 
 		return Response{}, &Error{Code: "driver_process_failed", Message: "driver process exited unsuccessfully; verify database state before retrying a write"}
 	}
 	return result, nil
+}
+
+func command(spec conn.Spec) (string, []string, error) {
+	if !spec.Module {
+		path, err := executable(spec)
+		return path, nil, err
+	}
+	if !drivermodule.Enabled {
+		return "", nil, &Error{Code: "driver_invalid", Message: "this DBX build does not support modules; install the shared-host build"}
+	}
+	host, err := os.Executable()
+	if err != nil {
+		return "", nil, err
+	}
+	v, err := drivermodule.Open(spec, host)
+	if err != nil {
+		var moduleErr *drivermodule.Error
+		if errors.As(err, &moduleErr) {
+			return "", nil, &Error{Code: moduleErr.Code, Message: moduleErr.Message}
+		}
+		return "", nil, err
+	}
+	v.File.Close()
+	return host, []string{"--internal-module-worker", spec.Engine, v.Path}, nil
 }
 
 func readResponse(r io.Reader, engine string, req Request) (Response, error) {
