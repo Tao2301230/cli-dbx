@@ -26,6 +26,7 @@ Drivers:
   MySQL and SQLite are built in.
   PostgreSQL, Oracle, DM, and SQL Server require separately installed drivers.
   Select a versioned executable with connection.driver_path; its manifest is <executable>.json.
+  Shared-host builds load an exact-host .dbmod directly; keep its .dbmod.json beside it.
   Flat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.config/dbx/drivers.
   Oracle/DM/SQL Server also support driver = "odbc" with driver_path and odbc_driver.
   Drivers are verified before launch; no PATH lookup or automatic download.

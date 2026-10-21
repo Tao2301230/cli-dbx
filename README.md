@@ -8,7 +8,7 @@
 - 用显式命令执行查询、更新、DDL 和导入导出
 - 用适合脚本和终端的格式返回结果
 
-本分支另提供实验性的[共享宿主与独立模块](./docs/shared-host.md)：Windows x64、macOS Apple Silicon 的驱动使用 `.dbmod`，安装、构建和验证见该文档。使用模块需下载同次构建的共享宿主与模块包，并在 `driver_path` 中指定模块路径。
+本分支另提供实验性的[共享宿主与独立模块](./docs/shared-host.md)：Windows x64、macOS Apple Silicon 的四个原生驱动使用 `.dbmod`，在 CLI 主进程按需加载。下载同次构建的共享宿主与所需模块包，在 `driver_path` 中指定模块路径即可；安装、构建和验证见该文档。
 
 如果你要看设计目标、动作边界、事务模型和开发约定，请看 [AGENTS.md](./AGENTS.md)。
 

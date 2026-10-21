@@ -73,7 +73,8 @@ func newRootCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 DBX includes MySQL and SQLite. PostgreSQL, Oracle, DM, and SQL Server use
 separately installed driver processes. Select a versioned executable with
 connection.driver_path; its manifest is <executable>.json in the same flat directory.
-Shared-host builds also accept an exact-host .dbmod and its .dbmod.json manifest.
+Shared-host builds load an exact-host .dbmod directly in the CLI process;
+keep its matching .dbmod.json manifest beside it.
 Flat unversioned default root: connection.driver_dir > DBX_DRIVER_DIR > ~/.config/dbx/drivers.
 Oracle/DM/SQL Server also support driver = "odbc" with driver_path and odbc_driver.
 Drivers are verified before launch; no PATH lookup or automatic download.
