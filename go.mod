@@ -1,6 +1,6 @@
 module github.com/linlay/cli-dbx
 
-go 1.26.6
+go 1.22
 
 replace github.com/spf13/cobra => ./third_party/cobra
 
